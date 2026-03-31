@@ -13,13 +13,13 @@ import {
 	useChatContext,
 	useMessageComposer,
 } from "stream-chat-react";
-import { startAiAgent, summarizeConversation } from "../api";
+// import { startAiAgent, summarizeConversation } from "../api";
 
-const isWatchedByAI = (channel: Channel) => {
-	return Object.keys(channel.state.watchers).some((watcher) =>
-		watcher.startsWith("ai-bot")
-	);
-};
+// const isWatchedByAI = (channel: Channel) => {
+// 	return Object.keys(channel.state.watchers).some((watcher) =>
+// 		watcher.startsWith("ai-bot")
+// 	);
+// };
 
 export const Composer = () => {
 	const { client } = useChatContext();
