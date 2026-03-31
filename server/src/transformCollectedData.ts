@@ -95,6 +95,9 @@ export function transformCollectedData(input: CollectedData): ListingPayload {
     location: {},
     attributes,
     videos: [],
-    images: ['3794feb5-5fcf-4747-a8e3-fbd766520148'],
+    // Images are populated by the agent from actual uploaded URLs.
+    // Fallback to empty array — the caller (AnthropicAgent) will override this
+    // with the collected image URLs before submitting.
+    images: [],
   };
 }

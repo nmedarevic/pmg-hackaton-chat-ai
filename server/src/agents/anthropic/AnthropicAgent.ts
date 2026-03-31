@@ -15,17 +15,19 @@ const PET_SCHEMA: Record<string, unknown> = JSON.parse(
 
 const SYSTEM_PROMPT = `You are a pet listing assistant. Your job is to help the user create a complete pet advert.
 
-## Step 1 — Image
-If no image has been uploaded yet, ask the user to upload a photo of their pet. Do not proceed without one.
+## Step 1 — Images
+If no image has been uploaded yet, ask the user to upload one or more photos of their pet(s). Encourage them to upload as many photos as they like — all images will be included in the listing. Do not proceed without at least one photo.
 
-## Step 2 — Analyse the image
-Once an image is provided, extract the following and pre-fill them without asking:
+## Step 2 — Analyse the image(s)
+Once images are provided, extract the following and pre-fill them without asking:
 - **breed**: identify the breed and convert it to dot-notation camelCase prefixed with "pets.dogs.forSale.", e.g. "pets.dogs.forSale.labradorRetriever", "pets.dogs.forSale.frenchBulldog", "pets.dogs.forSale.goldenRetriever". Use your best judgement for the camelCase key.
 - **advert_type**: default to "pets.dogs.forSale" unless context suggests otherwise.
 - **title**: a short, catchy listing title.
 - **description**: 2-3 sentence engaging listing description.
 
-Present these to the user so they can confirm or correct them.
+If multiple pets appear in the images, acknowledge them and ask the user to confirm how many males and females are in the litter.
+
+Present the pre-filled fields to the user so they can confirm or correct them. If the user uploads additional photos at any point, accept them and add them to the listing.
 
 ## Step 3 — Collect remaining fields
 Ask the user (one or two at a time) for:
@@ -42,13 +44,13 @@ Once you have all fields confirmed, call submit_collected_data with the complete
 - Wanted → pets.dogs.wanted
 - Rescue / Rehome → pets.dogs.rescueRehome
 
-Be conversational and friendly. If the user corrects a value, accept it.`;
+Be conversational and friendly. If the user corrects a value, accept it. The user can upload more photos at any time — acknowledge new images and confirm they have been added to the listing.`;
 
 export class AnthropicAgent implements AIAgent {
   private anthropic?: Anthropic;
   private handlers: AnthropicResponseHandler[] = [];
   private lastInteractionTs = Date.now();
-  private lastImageUrl: string | null = null;
+  private imageUrls: string[] = [];
 
   constructor(
     readonly chatClient: StreamChat,
@@ -136,10 +138,12 @@ Rules:
     const hasImages = e.message.attachments?.some((a) => a.type === 'image' && a.image_url);
     if (!message && !hasImages) return;
 
-    const imageUrl = e.message.attachments?.find(
-      (a): a is typeof a & { image_url: string } => a.type === 'image' && typeof a.image_url === 'string',
-    )?.image_url ?? null;
-    if (imageUrl) this.lastImageUrl = imageUrl;
+    const newImageUrls = (e.message.attachments ?? [])
+      .filter((a): a is typeof a & { image_url: string } => a.type === 'image' && typeof a.image_url === 'string')
+      .map((a) => a.image_url);
+    if (newImageUrls.length > 0) {
+      this.imageUrls.push(...newImageUrls);
+    }
 
     this.lastInteractionTs = Date.now();
 
@@ -208,8 +212,8 @@ Rules:
           console.log('Data collection complete (raw):', JSON.stringify(input));
 
           const payload = transformCollectedData(input as any)
-          if (this.lastImageUrl) {
-            payload.images = [this.lastImageUrl];
+          if (this.imageUrls.length > 0) {
+            payload.images = [...this.imageUrls];
           }
 
           console.log('Transformed listing payload:', JSON.stringify(payload));
