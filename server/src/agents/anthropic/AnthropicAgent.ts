@@ -46,6 +46,11 @@ export class AnthropicAgent implements AIAgent {
     }
     this.anthropic = new Anthropic({ apiKey });
 
+    await this.channel.sendMessage({
+      text: "Hello! 👋 I'm here to help identify your pet for a listing. Please upload a photo of your pet to get started!",
+      ai_generated: true,
+    });
+
     this.chatClient.on('message.new', this.handleMessage);
   };
 
