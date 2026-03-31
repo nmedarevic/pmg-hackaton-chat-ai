@@ -6,6 +6,12 @@ import type { AIAgent } from '../types';
 import { buildMessageContent } from './buildMessageContent';
 import { transformCollectedData } from '../../transformCollectedData';
 import { loginAndCreateListing } from '../../graphqlClient';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const PET_SCHEMA: Record<string, unknown> = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '../../../../schema/petSchema.json'), 'utf-8'),
+);
 
 const SYSTEM_PROMPT = `You are a pet listing assistant. Your job is to help the user create a complete pet advert.
 
@@ -37,28 +43,6 @@ Once you have all fields confirmed, call submit_collected_data with the complete
 - Rescue / Rehome → pets.dogs.rescueRehome
 
 Be conversational and friendly. If the user corrects a value, accept it.`;
-
-const PET_SCHEMA: Record<string, unknown> = {
-  title: { type: 'string', description: 'A short, catchy listing title' },
-  description: { type: 'string', description: 'An engaging 2-3 sentence listing description' },
-  advert_type: {
-    type: 'string',
-    description: 'The advert type code. Present human-readable label to user but submit the code.',
-    enum: [
-      'pets.dogs.forSale',
-      'pets.dogs.studDog',
-      'pets.dogs.wanted',
-      'pets.dogs.rescueRehome',
-    ],
-  },
-  breed: {
-    type: 'string',
-    description: 'Breed in dot-notation camelCase, e.g. pets.dogs.forSale.labradorRetriever',
-  },
-  number_of_males: { type: 'number', description: 'Number of male animals' },
-  number_of_females: { type: 'number', description: 'Number of female animals' },
-  date_of_birth: { type: 'string', description: 'Date of birth in YYYY-MM-DD format' },
-};
 
 export class AnthropicAgent implements AIAgent {
   private anthropic?: Anthropic;
@@ -107,15 +91,16 @@ ${JSON.stringify(this.schema, null, 2)}
 
 Rules:
 - Greet the user briefly and start asking for the required information.
-- Ask for one or two fields at a time in a natural, conversational way.
+- Ask for one field at a time in a natural, conversational way.
 - If the user provides multiple fields at once, acknowledge all of them.
 - If a value seems invalid for its expected type, politely ask for clarification.
 - If the user wants to correct a previously given value, accept the correction.
-- When you have collected ALL required fields, call the submit_collected_data tool with the complete data.
+- When you have collected ALL required fields, call the submit_collected_data tool with the complete data. Double check if some fields from the schema are missing.
 - Do NOT call the tool until you have values for every field in the schema.
 - The user can also upload images as attachments to their messages. If images are expected as part of the data collection, ask the user to upload them.
 - When images are attached to a message, they will appear as attachments. Acknowledge that you received them.
-- Be conversational and friendly, not robotic.`;
+- When analysing an image, populate the fields in the schema or ask which fields should be accepted.
+- Be conversational and friendly, not robotic. Do not analyse the answers.`;
   }
 
   private buildTool(): Anthropic.Messages.Tool {
