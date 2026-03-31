@@ -3,6 +3,7 @@ import { AnthropicResponseHandler } from './AnthropicResponseHandler';
 import type { MessageParam } from '@anthropic-ai/sdk/src/resources/messages';
 import type { Channel, Event, StreamChat } from 'stream-chat';
 import type { AIAgent } from '../types';
+import { transformCollectedData } from '../../transformCollectedData';
 
 export class AnthropicAgent implements AIAgent {
   private anthropic?: Anthropic;
@@ -139,11 +140,14 @@ Rules:
       channelMessage,
       async (toolName, input) => {
         if (toolName === 'submit_collected_data') {
-          console.log('Data collection complete:', JSON.stringify(input));
+          console.log('Data collection complete (raw):', JSON.stringify(input));
+          const listingPayload = transformCollectedData(input as any);
+          console.log('Transformed listing payload:', JSON.stringify(listingPayload));
+          
           try {
             await this.channel.sendEvent({
               type: 'data_collection_complete',
-              collected_data: input,
+              collected_data: listingPayload,
             } as any);
           } catch (error) {
             console.error('Failed to send data_collection_complete event', error);
