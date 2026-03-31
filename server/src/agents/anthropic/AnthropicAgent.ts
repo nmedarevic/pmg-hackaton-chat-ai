@@ -69,6 +69,8 @@ export class AnthropicAgent implements AIAgent {
 
     // For non-thread messages, the current message is already the last entry
     // in channel.state.messages — exclude it so we can re-add it with vision content.
+    // Thread replies are NOT in channel.state.messages (Stream stores them separately),
+    // so for thread replies we use historySlice as-is and just append the current message.
     const historySlice = this.channel.state.messages
       .slice(-5)
       .filter((msg) => msg.text && msg.text.trim() !== '');
