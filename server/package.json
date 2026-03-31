@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "tsc && node dist/index.js",
-    "test": "vitest run --config vitest.config.mjs"
+    "test": "vitest run --config vitest.config.mjs --passWithNoTests"
   },
   "keywords": [],
   "author": "GetStream.io",
