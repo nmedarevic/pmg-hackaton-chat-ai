@@ -1,16 +1,7 @@
+import type { ImageBlockParam, TextBlockParam } from '@anthropic-ai/sdk/resources/messages/messages';
 import type { Attachment } from 'stream-chat';
 
-type ImageBlock = {
-  type: 'image';
-  source: { type: 'url'; url: string };
-};
-
-type TextBlock = {
-  type: 'text';
-  text: string;
-};
-
-type ContentBlocks = Array<ImageBlock | TextBlock>;
+type ContentBlocks = Array<ImageBlockParam | TextBlockParam>;
 
 export function buildMessageContent(
   text: string,
@@ -26,7 +17,7 @@ export function buildMessageContent(
   }
 
   return [
-    ...imageAttachments.map((a): ImageBlock => ({
+    ...imageAttachments.map((a): ImageBlockParam => ({
       type: 'image',
       source: { type: 'url', url: a.image_url },
     })),
