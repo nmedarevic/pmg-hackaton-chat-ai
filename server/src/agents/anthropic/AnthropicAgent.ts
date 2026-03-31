@@ -4,29 +4,59 @@ import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import type { Channel, Event, StreamChat } from 'stream-chat';
 import type { AIAgent } from '../types';
 import { buildMessageContent } from './buildMessageContent';
+import { transformCollectedData } from '../../transformCollectedData';
 
-const SYSTEM_PROMPT = `You are a pet identification assistant for a pet listing service.
+const SYSTEM_PROMPT = `You are a pet listing assistant. Your job is to help the user create a complete pet advert.
 
-Your job:
-- When the conversation starts, or when no image has been shared yet, ask the user to upload a photo of their pet. Be friendly but persistent — do not proceed without an image.
-- Once an image is provided, analyze it and extract:
-  - Animal type (dog, cat, horse, rabbit, etc.)
-  - Breed (be specific; if uncertain, list the most likely breeds)
-  - Number of animals in the image
-  - Color(s) and coat/markings
-  - Any other notable attributes (age estimate, size, distinguishing features)
-- Based on all observed details, compose a short catchy listing title and an engaging description (2-3 sentences).
-- Present the analysis, title, and description to the user.
-- After presenting your analysis, call the submit_collected_data tool with: type, breed, count, title, and description.
-- After analysis, remain available for follow-up questions about the pet.
-- If the user asks something unrelated to pets or the image, gently redirect them back to the pet listing task.`;
+## Step 1 — Image
+If no image has been uploaded yet, ask the user to upload a photo of their pet. Do not proceed without one.
 
-const PET_SCHEMA = {
-  type: { type: 'string', description: 'Animal type (dog, cat, horse, rabbit, etc.)' },
-  breed: { type: 'string', description: 'Specific breed or most likely breeds' },
-  count: { type: 'number', description: 'Number of animals in the image' },
-  title: { type: 'string', description: 'A short, catchy pet listing title' },
-  description: { type: 'string', description: 'A suggested pet listing description based on all observed details' },
+## Step 2 — Analyse the image
+Once an image is provided, extract the following and pre-fill them without asking:
+- **breed**: identify the breed and convert it to dot-notation camelCase prefixed with "pets.dogs.forSale.", e.g. "pets.dogs.forSale.labradorRetriever", "pets.dogs.forSale.frenchBulldog", "pets.dogs.forSale.goldenRetriever". Use your best judgement for the camelCase key.
+- **advert_type**: default to "pets.dogs.forSale" unless context suggests otherwise.
+- **title**: a short, catchy listing title.
+- **description**: 2-3 sentence engaging listing description.
+
+Present these to the user so they can confirm or correct them.
+
+## Step 3 — Collect remaining fields
+Ask the user (one or two at a time) for:
+- **number_of_males** — how many male pups?
+- **number_of_females** — how many female pups?
+- **date_of_birth** — date of birth of the litter (ask in plain English, convert to YYYY-MM-DD internally)
+
+## Step 4 — Submit
+Once you have all fields confirmed, call submit_collected_data with the complete data.
+
+### advert_type values (show the human label, submit the code):
+- For Sale → pets.dogs.forSale
+- Stud Dog → pets.dogs.studDog
+- Wanted → pets.dogs.wanted
+- Rescue / Rehome → pets.dogs.rescueRehome
+
+Be conversational and friendly. If the user corrects a value, accept it.`;
+
+const PET_SCHEMA: Record<string, unknown> = {
+  title: { type: 'string', description: 'A short, catchy listing title' },
+  description: { type: 'string', description: 'An engaging 2-3 sentence listing description' },
+  advert_type: {
+    type: 'string',
+    description: 'The advert type code. Present human-readable label to user but submit the code.',
+    enum: [
+      'pets.dogs.forSale',
+      'pets.dogs.studDog',
+      'pets.dogs.wanted',
+      'pets.dogs.rescueRehome',
+    ],
+  },
+  breed: {
+    type: 'string',
+    description: 'Breed in dot-notation camelCase, e.g. pets.dogs.forSale.labradorRetriever',
+  },
+  number_of_males: { type: 'number', description: 'Number of male animals' },
+  number_of_females: { type: 'number', description: 'Number of female animals' },
+  date_of_birth: { type: 'string', description: 'Date of birth in YYYY-MM-DD format' },
 };
 
 export class AnthropicAgent implements AIAgent {
@@ -59,7 +89,7 @@ export class AnthropicAgent implements AIAgent {
     this.anthropic = new Anthropic({ apiKey });
 
     await this.channel.sendMessage({
-      text: "Hello! 👋 I'm here to help to you create a listing. To start, please upload a photo of your pet!",
+      text: "Hello! 👋 I'm here to help you create a listing. To start, please upload a photo of your pet!",
       ai_generated: true,
     });
 
@@ -91,7 +121,7 @@ Rules:
     const effectiveSchema = this.schema ?? PET_SCHEMA;
     const requiredFields = this.schema
       ? Object.keys(this.schema)
-      : ['type', 'breed', 'count', 'title', 'description'];
+      : ['title', 'description', 'advert_type', 'breed', 'number_of_males', 'number_of_females', 'date_of_birth'];
 
     return {
       name: 'submit_collected_data',
@@ -128,7 +158,7 @@ Rules:
     this.lastInteractionTs = Date.now();
 
     const isThreadReply = e.message.parent_id !== undefined;
-    const historySize = this.schema ? 20 : 5;
+    const historySize = this.schema ? 20 : 20;
 
     // For non-thread messages, the current message is already the last entry
     // in channel.state.messages — exclude it so we can re-add it with vision content.
@@ -160,7 +190,7 @@ Rules:
       max_tokens: 1024,
       system: systemPrompt ?? SYSTEM_PROMPT,
       messages,
-      model: this.schema ? 'claude-haiku-4-5' : 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-5',
       tools: [tool],
       stream: true,
     });
@@ -189,15 +219,18 @@ Rules:
       channelMessage,
       async (toolName, input) => {
         if (toolName === 'submit_collected_data') {
-          const collected_data = {
-            ...input,
-            image: this.lastImageUrl,
-          };
-          console.log('Data collection complete:', JSON.stringify(collected_data));
+          console.log('Data collection complete (raw):', JSON.stringify(input));
+
+          const payload = transformCollectedData(input as any) as unknown as Record<string, unknown>;
+          if (this.lastImageUrl) {
+            (payload as any).images = [this.lastImageUrl];
+          }
+
+          console.log('Transformed listing payload:', JSON.stringify(payload));
           try {
             await this.channel.sendEvent({
               type: 'data_collection_complete',
-              collected_data,
+              collected_data: payload,
             } as any);
           } catch (error) {
             console.error('Failed to send data_collection_complete event', error);
