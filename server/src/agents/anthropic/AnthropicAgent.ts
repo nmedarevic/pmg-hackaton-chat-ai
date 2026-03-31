@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AnthropicResponseHandler } from './AnthropicResponseHandler';
-import type { MessageParam } from '@anthropic-ai/sdk/src/resources/messages';
+import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import type { Channel, Event, StreamChat } from 'stream-chat';
 import type { AIAgent } from '../types';
 import { buildMessageContent } from './buildMessageContent';
