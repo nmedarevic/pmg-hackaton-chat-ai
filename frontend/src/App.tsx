@@ -1,4 +1,3 @@
-import type { ChannelFilters, ChannelOptions, ChannelSort } from "stream-chat";
 import { Chat, useCreateChatClient } from "stream-chat-react";
 
 import { ChatContent } from "./components/ChatContent";
@@ -22,14 +21,6 @@ const userIdFromToken = (token: string) => {
 
 const userId = userIdFromToken(userToken!);
 
-const filters: ChannelFilters = {
-	members: { $in: [userId] },
-	type: "messaging",
-	archived: false,
-};
-const options: ChannelOptions = { limit: 5 };
-const sort: ChannelSort = { pinned_at: 1, last_message_at: -1, updated_at: -1 };
-
 function App() {
 	const chatClient = useCreateChatClient({
 		apiKey: apiKey!,
@@ -45,7 +36,7 @@ function App() {
 
 	return (
 		<Chat client={chatClient}>
-			<ChatContent filters={filters} sort={sort} options={options} />
+			<ChatContent />
 		</Chat>
 	);
 }

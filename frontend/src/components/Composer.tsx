@@ -68,8 +68,6 @@ export const Composer = () => {
 					const formData = new FormData(target);
 
 					const message = formData.get("message");
-					const platformModel = formData.get("platform-model");
-
 					composer.textComposer.setText(message as string);
 
 					const composedData = await composer.compose();
@@ -85,7 +83,8 @@ export const Composer = () => {
 						await channel.watch();
 					}
 
-					const [platform, model] = (platformModel as string).split("|");
+					const platform = "anthropic";
+					const model = "claude-3-haiku-20240307";
 
 					if (!isWatchedByAI(channel)) {
 						await startAiAgent(channel, model, platform);
@@ -145,15 +144,7 @@ export const Composer = () => {
 					<div style={{ display: "flex", gap: ".25rem", alignItems: "center" }}>
 						<AIMessageComposer.FileInput name="attachments" />
 						<AIMessageComposer.SpeechToTextButton />
-						<AIMessageComposer.ModelSelect name="platform-model" options={
-						<>
-								<option value="anthropic|claude-3-haiku-20240307">Claude 3 Haiku</option>
-								{/* <option value="anthropic|claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
-								<option value="anthropic|claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
-								<option value="anthropic|claude-opus-4-5">Claude Opus 4.5</option> */}
-						</>
-					} />
-					</div>
+	</div>
 
 					<AIMessageComposer.SubmitButton active={attachments.length > 0} />
 				</div>

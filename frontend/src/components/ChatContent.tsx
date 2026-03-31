@@ -1,24 +1,17 @@
 import {
 	Channel,
 	MessageList,
-	ChannelList,
 	Window,
 	MessageInput,
 	useChatContext,
-	type ChannelListProps,
 } from "stream-chat-react";
 import { Composer } from "./Composer";
 import { MessageBubble } from "./MessageBubble";
 import { AIStateIndicator } from "./AIStateIndicator";
 import { useEffect } from "react";
 import { nanoid } from "nanoid";
-import { ChannelListItem } from "./ChannelListItem";
 
-export const ChatContent = ({
-	filters,
-	options,
-	sort,
-}: Pick<ChannelListProps, "options" | "sort" | "filters">) => {
+export const ChatContent = () => {
 	const { setActiveChannel, client, channel } = useChatContext();
 
 	useEffect(() => {
@@ -34,21 +27,12 @@ export const ChatContent = ({
 	}, [channel]);
 
 	return (
-		<>
-			<ChannelList
-				Preview={ChannelListItem}
-				setActiveChannelOnMount={false}
-				filters={filters}
-				sort={sort}
-				options={options}
-			/>
-			<Channel initializeOnMount={false} Message={MessageBubble}>
-				<Window>
-					<MessageList />
-					<AIStateIndicator />
-					<MessageInput Input={Composer} />
-				</Window>
-			</Channel>
-		</>
+		<Channel initializeOnMount={false} Message={MessageBubble}>
+			<Window>
+				<MessageList />
+				<AIStateIndicator />
+				<MessageInput Input={Composer} />
+			</Window>
+		</Channel>
 	);
 };

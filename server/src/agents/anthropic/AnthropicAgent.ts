@@ -68,7 +68,7 @@ export class AnthropicAgent implements AIAgent {
     const anthropicStream = await this.anthropic.messages.create({
       max_tokens: 1024,
       messages,
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-haiku-4-5',
       stream: true,
     });
 
