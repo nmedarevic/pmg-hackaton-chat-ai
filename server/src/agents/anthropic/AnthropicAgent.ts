@@ -15,14 +15,25 @@ Your job:
   - Number of animals in the image
   - Color(s) and coat/markings
   - Any other notable attributes (age estimate, size, distinguishing features)
-- Format the results clearly so they can be used in a pet listing.
+- Based on all observed details, compose a short catchy listing title and an engaging description (2-3 sentences).
+- Present the analysis, title, and description to the user.
+- After presenting your analysis, call the submit_collected_data tool with: type, breed, count, title, and description.
 - After analysis, remain available for follow-up questions about the pet.
 - If the user asks something unrelated to pets or the image, gently redirect them back to the pet listing task.`;
+
+const PET_SCHEMA = {
+  type: { type: 'string', description: 'Animal type (dog, cat, horse, rabbit, etc.)' },
+  breed: { type: 'string', description: 'Specific breed or most likely breeds' },
+  count: { type: 'number', description: 'Number of animals in the image' },
+  title: { type: 'string', description: 'A short, catchy pet listing title' },
+  description: { type: 'string', description: 'A suggested pet listing description based on all observed details' },
+};
 
 export class AnthropicAgent implements AIAgent {
   private anthropic?: Anthropic;
   private handlers: AnthropicResponseHandler[] = [];
   private lastInteractionTs = Date.now();
+  private lastImageUrl: string | null = null;
 
   constructor(
     readonly chatClient: StreamChat,
@@ -76,8 +87,11 @@ Rules:
 - Be conversational and friendly, not robotic.`;
   }
 
-  private buildTool(): Anthropic.Messages.Tool | undefined {
-    if (!this.schema) return undefined;
+  private buildTool(): Anthropic.Messages.Tool {
+    const effectiveSchema = this.schema ?? PET_SCHEMA;
+    const requiredFields = this.schema
+      ? Object.keys(this.schema)
+      : ['type', 'breed', 'count', 'title', 'description'];
 
     return {
       name: 'submit_collected_data',
@@ -85,8 +99,8 @@ Rules:
         'Submit the fully collected structured data when all required fields have been gathered from the user.',
       input_schema: {
         type: 'object' as const,
-        properties: this.schema,
-        required: Object.keys(this.schema),
+        properties: effectiveSchema,
+        required: requiredFields,
       },
     };
   }
@@ -105,6 +119,11 @@ Rules:
     const message = e.message.text ?? '';
     const hasImages = e.message.attachments?.some((a) => a.type === 'image' && a.image_url);
     if (!message && !hasImages) return;
+
+    const imageUrl = e.message.attachments?.find(
+      (a): a is typeof a & { image_url: string } => a.type === 'image' && typeof a.image_url === 'string',
+    )?.image_url ?? null;
+    if (imageUrl) this.lastImageUrl = imageUrl;
 
     this.lastInteractionTs = Date.now();
 
@@ -142,7 +161,7 @@ Rules:
       system: systemPrompt ?? SYSTEM_PROMPT,
       messages,
       model: this.schema ? 'claude-haiku-4-5' : 'claude-sonnet-4-5',
-      ...(tool ? { tools: [tool] } : {}),
+      tools: [tool],
       stream: true,
     });
 
@@ -170,11 +189,15 @@ Rules:
       channelMessage,
       async (toolName, input) => {
         if (toolName === 'submit_collected_data') {
-          console.log('Data collection complete:', JSON.stringify(input));
+          const collected_data = {
+            ...input,
+            image: this.lastImageUrl,
+          };
+          console.log('Data collection complete:', JSON.stringify(collected_data));
           try {
             await this.channel.sendEvent({
               type: 'data_collection_complete',
-              collected_data: input,
+              collected_data,
             } as any);
           } catch (error) {
             console.error('Failed to send data_collection_complete event', error);
