@@ -56,4 +56,16 @@ describe('buildMessageContent', () => {
     const result = buildMessageContent('hi', undefined);
     expect(result).toBe('hi');
   });
+
+  it('omits text block when text is empty and image is present', () => {
+    const result = buildMessageContent('', [
+      { type: 'image', image_url: 'https://cdn.stream-io.com/image.jpg' },
+    ]);
+    expect(result).toEqual([
+      {
+        type: 'image',
+        source: { type: 'url', url: 'https://cdn.stream-io.com/image.jpg' },
+      },
+    ]);
+  });
 });

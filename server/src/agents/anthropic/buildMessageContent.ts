@@ -21,6 +21,6 @@ export function buildMessageContent(
       type: 'image',
       source: { type: 'url', url: a.image_url },
     })),
-    { type: 'text', text },
+    ...(text.length > 0 ? [{ type: 'text' as const, text }] : []),
   ];
 }
