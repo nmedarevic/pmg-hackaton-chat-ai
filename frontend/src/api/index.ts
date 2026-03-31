@@ -9,7 +9,8 @@ if (typeof baseApiUrl !== "string" || !baseApiUrl.length) {
 export const startAiAgent = async (
 	channel: Channel,
 	model: string,
-	platform: "openai" | "anthropic" | "gemini" | "xai" | (string & {}) = "openai"
+	platform: "openai" | "anthropic" | "gemini" | "xai" | (string & {}) = "openai",
+	schema?: Record<string, unknown>,
 ) =>
 	fetch(`${baseApiUrl}/start-ai-agent`, {
 		method: "POST",
@@ -19,6 +20,7 @@ export const startAiAgent = async (
 			channel_type: channel.type,
 			platform,
 			model,
+			schema,
 		}),
 	});
 

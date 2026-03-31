@@ -45,6 +45,15 @@ export const Composer = () => {
 		return () => composer.attachmentManager.setCustomUploadFn(previousDefault);
 	}, [client, composer]);
 
+	useEffect(() => {
+		const listener = channel.on((event) => {
+			if (event.type === 'data_collection.complete') {
+				console.log('Data collection complete:', event.collected_data);
+			}
+		});
+		return () => listener.unsubscribe();
+	}, [channel]);
+
 	return (
 		<div className="tut__composer-container">
 			<AIMessageComposer
@@ -86,8 +95,16 @@ export const Composer = () => {
 					const platform = "anthropic";
 					const model = "claude-haiku-4-5";
 
+					const schema = {
+						title: { type: "string", description: "A title of the litter's advert" },
+						description: { type: "string", description: "A brief description about the advert, the pets and the mother" },
+						number_of_males: { type: "number", description: "Number of male pets in the litter" },
+						number_of_females: { type: "number", description: "Number of female pets in the litter" },
+						date_of_birth: { type: "number", description: "When were all pets born? User can add a date in any format, but the output should be always in ISO8601 date with UTC timezone" },
+					};
+
 					if (!isWatchedByAI(channel)) {
-						await startAiAgent(channel, model, platform);
+						await startAiAgent(channel, model, platform, schema);
 					}
 
 					await sendMessage(composedData);

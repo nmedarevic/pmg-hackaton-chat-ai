@@ -54,7 +54,8 @@ app.post('/start-ai-agent', async (req, res) => {
   const {
     channel_id,
     channel_type = 'messaging',
-    platform = AgentPlatform.ANTHROPIC
+    platform = AgentPlatform.ANTHROPIC,
+    schema,
   } = req.body;
 
   // Simple validation
@@ -95,6 +96,7 @@ app.post('/start-ai-agent', async (req, res) => {
         platform,
         channel_type,
         channel_id_updated,
+        schema,
       );
 
       await agent.init();
