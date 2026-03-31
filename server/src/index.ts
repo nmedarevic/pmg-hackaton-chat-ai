@@ -5,6 +5,14 @@ import { AgentPlatform, AIAgent } from './agents/types';
 import { createAgent } from './agents/createAgent';
 import { apiKey, serverClient } from './serverClient';
 
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
+});
+
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: '*' }));
@@ -17,13 +25,17 @@ const pendingAiAgents = new Set<string>();
 // TODO: temporary set to 8 hours, should be cleaned up at some point
 const inactivityThreshold = 480 * 60 * 1000;
 setInterval(async () => {
-  const now = Date.now();
-  for (const [userId, aiAgent] of aiAgentCache) {
-    if (now - aiAgent.getLastInteraction() > inactivityThreshold) {
-      console.log(`Disposing AI Agent due to inactivity: ${userId}`);
-      await disposeAiAgent(aiAgent, userId);
-      aiAgentCache.delete(userId);
+  try {
+    const now = Date.now();
+    for (const [userId, aiAgent] of aiAgentCache) {
+      if (now - aiAgent.getLastInteraction() > inactivityThreshold) {
+        console.log(`Disposing AI Agent due to inactivity: ${userId}`);
+        await disposeAiAgent(aiAgent, userId);
+        aiAgentCache.delete(userId);
+      }
     }
+  } catch (error) {
+    console.error('Error during inactivity cleanup:', error);
   }
 }, 5000);
 
@@ -42,7 +54,8 @@ app.post('/start-ai-agent', async (req, res) => {
   const {
     channel_id,
     channel_type = 'messaging',
-    platform = AgentPlatform.ANTHROPIC
+    platform = AgentPlatform.ANTHROPIC,
+    schema,
   } = req.body;
 
   // Simple validation
@@ -83,6 +96,7 @@ app.post('/start-ai-agent', async (req, res) => {
         platform,
         channel_type,
         channel_id_updated,
+        schema,
       );
 
       await agent.init();
@@ -138,6 +152,12 @@ async function disposeAiAgent(aiAgent: AIAgent, userId: string) {
   );
   await channel.removeMembers([userId]);
 }
+
+// Express error-handling middleware (must be last)
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Unhandled route error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
 
 // Start the Express server
 const port = process.env.PORT || 3000;

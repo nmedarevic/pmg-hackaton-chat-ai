@@ -9,6 +9,7 @@ export const createAgent = async (
   platform: AgentPlatform,
   channel_type: string,
   channel_id: string,
+  schema?: Record<string, unknown>,
 ): Promise<AIAgent> => {
   const client = new StreamChat(apiKey, { allowServerSideConnect: true });
   const token = serverClient.createToken(user_id);
@@ -21,5 +22,5 @@ export const createAgent = async (
   if (platform === AgentPlatform.OPENAI) {
     return new OpenAIAgent(client, channel);
   }
-  return new AnthropicAgent(client, channel);
+  return new AnthropicAgent(client, channel, schema);
 };

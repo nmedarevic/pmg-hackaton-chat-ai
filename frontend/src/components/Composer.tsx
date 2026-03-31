@@ -38,6 +38,15 @@ export const Composer = () => {
 		return () => composer.attachmentManager.setCustomUploadFn(previousDefault);
 	}, [client, composer]);
 
+	useEffect(() => {
+		const listener = channel.on((event) => {
+			if (event.type === 'data_collection_complete') {
+				console.log('Data collection complete:', event.collected_data);
+			}
+		});
+		return () => listener.unsubscribe();
+	}, [channel]);
+
 	return (
 		<div className="tut__composer-container">
 			<AIMessageComposer
@@ -78,16 +87,19 @@ export const Composer = () => {
 						typeof channel.data?.summary !== "string" ||
 						!channel.data.summary.length
 					) {
-						const summary = await summarizeConversation(
-							message as string
-						).catch(() => {
-							console.warn("Failed to summarize conversation");
-							return null;
-						});
+						// Skip summarise for now
+						// const summary = await summarizeConversation(
+						// 	message as string
+						// ).catch(() => {
+						// 	console.warn("Failed to summarize conversation");
+						// 	return null;
+						// });
+						
 
-						if (typeof summary === "string" && summary.length > 0) {
-							await channel.update({ summary });
-						}
+						// if (typeof summary === "string" && summary.length > 0) {
+						// 	await channel.update({ summary });
+						// }
+						
 					}
 				}}
 			>
