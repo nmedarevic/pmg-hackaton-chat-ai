@@ -84,7 +84,7 @@ export const Composer = () => {
 					}
 
 					const platform = "anthropic";
-					const model = "claude-3-haiku-20240307";
+					const model = "claude-haiku-4-5";
 
 					if (!isWatchedByAI(channel)) {
 						await startAiAgent(channel, model, platform);
