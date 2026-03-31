@@ -142,11 +142,11 @@ Rules:
           console.log('Data collection complete:', JSON.stringify(input));
           try {
             await this.channel.sendEvent({
-              type: 'data_collection.complete',
+              type: 'data_collection_complete',
               collected_data: input,
             } as any);
           } catch (error) {
-            console.error('Failed to send data_collection.complete event', error);
+            console.error('Failed to send data_collection_complete event', error);
           }
         }
       },

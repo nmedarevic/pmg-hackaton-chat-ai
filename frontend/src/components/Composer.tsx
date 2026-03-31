@@ -47,7 +47,7 @@ export const Composer = () => {
 
 	useEffect(() => {
 		const listener = channel.on((event) => {
-			if (event.type === 'data_collection.complete') {
+			if (event.type === 'data_collection_complete') {
 				console.log('Data collection complete:', event.collected_data);
 			}
 		});
