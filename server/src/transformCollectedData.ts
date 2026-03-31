@@ -13,7 +13,7 @@ interface ListingAttribute {
   value: string;
 }
 
-interface ListingPayload {
+export interface ListingPayload {
   category: string;
   title: string;
   description: string;

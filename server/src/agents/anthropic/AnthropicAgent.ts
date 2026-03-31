@@ -4,6 +4,7 @@ import type { MessageParam } from '@anthropic-ai/sdk/src/resources/messages';
 import type { Channel, Event, StreamChat } from 'stream-chat';
 import type { AIAgent } from '../types';
 import { transformCollectedData } from '../../transformCollectedData';
+import { loginAndCreateListing } from '../../graphqlClient';
 
 export class AnthropicAgent implements AIAgent {
   private anthropic?: Anthropic;
@@ -151,6 +152,12 @@ Rules:
             } as any);
           } catch (error) {
             console.error('Failed to send data_collection_complete event', error);
+          }
+
+          try {
+            await loginAndCreateListing(listingPayload);
+          } catch (error) {
+            console.error('Failed to create listing on remote server', error);
           }
         }
       },
