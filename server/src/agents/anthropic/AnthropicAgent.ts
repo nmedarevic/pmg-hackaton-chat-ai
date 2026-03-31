@@ -60,8 +60,9 @@ export class AnthropicAgent implements AIAgent {
       return;
     }
 
-    const message = e.message.text;
-    if (!message) return;
+    const message = e.message.text ?? '';
+    const hasImages = e.message.attachments?.some((a) => a.type === 'image' && a.image_url);
+    if (!message && !hasImages) return;
 
     this.lastInteractionTs = Date.now();
 
