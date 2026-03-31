@@ -3,6 +3,21 @@ import { AnthropicResponseHandler } from './AnthropicResponseHandler';
 import type { MessageParam } from '@anthropic-ai/sdk/src/resources/messages';
 import type { Channel, Event, StreamChat } from 'stream-chat';
 import type { AIAgent } from '../types';
+import { buildMessageContent } from './buildMessageContent';
+
+const SYSTEM_PROMPT = `You are a pet identification assistant for a pet listing service.
+
+Your job:
+- When the conversation starts, or when no image has been shared yet, ask the user to upload a photo of their pet. Be friendly but persistent — do not proceed without an image.
+- Once an image is provided, analyze it and extract:
+  - Animal type (dog, cat, horse, rabbit, etc.)
+  - Breed (be specific; if uncertain, list the most likely breeds)
+  - Number of animals in the image
+  - Color(s) and coat/markings
+  - Any other notable attributes (age estimate, size, distinguishing features)
+- Format the results clearly so they can be used in a pet listing.
+- After analysis, remain available for follow-up questions about the pet.
+- If the user asks something unrelated to pets or the image, gently redirect them back to the pet listing task.`;
 
 export class AnthropicAgent implements AIAgent {
   private anthropic?: Anthropic;
@@ -50,25 +65,34 @@ export class AnthropicAgent implements AIAgent {
 
     this.lastInteractionTs = Date.now();
 
-    const messages = this.channel.state.messages
-      .slice(-5)
-      .filter((msg) => msg.text && msg.text.trim() !== '')
-      .map<MessageParam>((message) => ({
-        role: message.user?.id.startsWith('ai-bot') ? 'assistant' : 'user',
-        content: message.text || '',
-      }));
+    const isThreadReply = e.message.parent_id !== undefined;
 
-    if (e.message.parent_id !== undefined) {
-      messages.push({
+    // For non-thread messages, the current message is already the last entry
+    // in channel.state.messages — exclude it so we can re-add it with vision content.
+    const historySlice = this.channel.state.messages
+      .slice(-5)
+      .filter((msg) => msg.text && msg.text.trim() !== '');
+
+    const historyBase = isThreadReply ? historySlice : historySlice.slice(0, -1);
+
+    const messages: MessageParam[] = [
+      ...historyBase.map((msg) => ({
+        role: (msg.user?.id.startsWith('ai-bot') ? 'assistant' : 'user') as
+          | 'user'
+          | 'assistant',
+        content: msg.text || '',
+      })),
+      {
         role: 'user',
-        content: message,
-      });
-    }
+        content: buildMessageContent(message, e.message.attachments),
+      },
+    ];
 
     const anthropicStream = await this.anthropic.messages.create({
       max_tokens: 1024,
       messages,
-      model: 'claude-haiku-4-5',
+      model: 'claude-sonnet-4-5',
+      system: SYSTEM_PROMPT,
       stream: true,
     });
 
