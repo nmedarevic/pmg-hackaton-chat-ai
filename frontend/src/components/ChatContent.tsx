@@ -10,6 +10,7 @@ import { MessageBubble } from "./MessageBubble";
 import { AIStateIndicator } from "./AIStateIndicator";
 import { useEffect } from "react";
 import { nanoid } from "nanoid";
+import { startAiAgent } from "../api";
 
 export const ChatContent = () => {
 	const { setActiveChannel, client, channel } = useChatContext();
@@ -25,6 +26,17 @@ export const ChatContent = () => {
 			);
 		}
 	}, [channel]);
+
+	useEffect(() => {
+		if (!channel) return;
+		const autoStart = async () => {
+			if (!channel.initialized) {
+				await channel.watch();
+			}
+			await startAiAgent(channel, "claude-sonnet-4-5", "anthropic");
+		};
+		autoStart().catch(console.error);
+	}, [channel?.id]);
 
 	return (
 		<Channel initializeOnMount={false} Message={MessageBubble}>

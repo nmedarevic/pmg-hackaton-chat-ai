@@ -2,7 +2,6 @@ import { AIMessageComposer } from "@stream-io/chat-react-ai";
 import { useEffect } from "react";
 import {
 	isImageFile,
-	type Channel,
 	type LocalUploadAttachment,
 	type UploadRequestFn,
 } from "stream-chat";
@@ -13,13 +12,7 @@ import {
 	useChatContext,
 	useMessageComposer,
 } from "stream-chat-react";
-import { startAiAgent, summarizeConversation } from "../api";
-
-const isWatchedByAI = (channel: Channel) => {
-	return Object.keys(channel.state.watchers).some((watcher) =>
-		watcher.startsWith("ai-bot")
-	);
-};
+import { summarizeConversation } from "../api";
 
 export const Composer = () => {
 	const { client } = useChatContext();
@@ -78,17 +71,6 @@ export const Composer = () => {
 					composer.clear();
 
 					updateMessage(composedData?.localMessage);
-
-					if (!channel.initialized) {
-						await channel.watch();
-					}
-
-					const platform = "anthropic";
-					const model = "claude-haiku-4-5";
-
-					if (!isWatchedByAI(channel)) {
-						await startAiAgent(channel, model, platform);
-					}
 
 					await sendMessage(composedData);
 
