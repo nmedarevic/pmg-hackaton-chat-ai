@@ -3,9 +3,13 @@ interface CollectedData {
   description: string;
   advert_type: string;
   breed: string;
+  mother_breed: string;
+  father_breed: string;
   number_of_males: number;
   number_of_females: number;
   date_of_birth: string;
+  price: number;
+  deposit_amount: number;
 }
 
 interface ListingAttribute {
@@ -44,14 +48,29 @@ function toBreedAttributeValue(breedCode: string): string {
   return `pets.dogs.breed.${breedName}`;
 }
 
+function padToLength(str: string, minLen: number, maxLen: number): string {
+  let result = str.trim();
+  if (result.length < minLen) {
+    result = result.padEnd(minLen, '#');
+  }
+  if (result.length > maxLen) {
+    result = result.slice(0, maxLen);
+  }
+  return result;
+}
+
 export function transformCollectedData(input: CollectedData): ListingPayload {
+  const title = padToLength(input.title, 5, 50);
+  const description = padToLength(input.description, 100, 200);
   const breedAttr = toBreedAttributeValue(input.breed);
+  const motherBreedAttr = toBreedAttributeValue(input.mother_breed);
+  const fatherBreedAttr = toBreedAttributeValue(input.father_breed);
   const dobTimestamp = new Date(input.date_of_birth).toISOString();
 
   const attributes: ListingAttribute[] = [
     { key: 'breed', value: breedAttr },
-    { key: 'fatherBreed', value: breedAttr },
-    { key: 'motherBreed', value: breedAttr },
+    { key: 'fatherBreed', value: fatherBreedAttr },
+    { key: 'motherBreed', value: motherBreedAttr },
     { key: 'generation', value: 'f1' },
     { key: 'listingType', value: ADVERT_TYPE_TO_LISTING_TYPE[input.advert_type] || input.advert_type },
     { key: 'numberOfFemales', value: String(input.number_of_females) },
@@ -66,16 +85,16 @@ export function transformCollectedData(input: CollectedData): ListingPayload {
 
   return {
     category: 'pets.dogs',
-    title: input.title,
-    description: input.description,
-    price: { amount: 0, currency: 'GBP' },
-    depositAmount: { amount: 0, currency: 'GBP' },
-    requiredDeposit: 0,
+    title,
+    description,
+    price: { amount: input.price, currency: 'GBP' },
+    depositAmount: { amount: input.deposit_amount, currency: 'GBP' },
+    requiredDeposit: input.deposit_amount,
     hidePrice: false,
     preferredContact: 'ChatOnly',
     location: {},
     attributes,
     videos: [],
-    images: [],
+    images: ['3794feb5-5fcf-4747-a8e3-fbd766520148'],
   };
 }
