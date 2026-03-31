@@ -145,7 +145,14 @@ export const Composer = () => {
 					<div style={{ display: "flex", gap: ".25rem", alignItems: "center" }}>
 						<AIMessageComposer.FileInput name="attachments" />
 						<AIMessageComposer.SpeechToTextButton />
-						<AIMessageComposer.ModelSelect name="platform-model" />
+						<AIMessageComposer.ModelSelect name="platform-model" options={
+						<>
+								<option value="anthropic|claude-3-haiku-20240307">Claude 3 Haiku</option>
+								{/* <option value="anthropic|claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+								<option value="anthropic|claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
+								<option value="anthropic|claude-opus-4-5">Claude Opus 4.5</option> */}
+						</>
+					} />
 					</div>
 
 					<AIMessageComposer.SubmitButton active={attachments.length > 0} />
