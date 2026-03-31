@@ -26,7 +26,7 @@ export const summarizeConversation = (text: string) =>
 	fetch(`${baseApiUrl}/summarize`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ text, platform: "openai" }),
+		body: JSON.stringify({ text, platform: "anthropic", model: "claude-haiku-4-5" }),
 	})
 		.then((res) => res.json())
 		.then((json) => json.summary as string);
