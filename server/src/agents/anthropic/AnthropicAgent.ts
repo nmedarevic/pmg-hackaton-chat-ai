@@ -222,9 +222,9 @@ Rules:
         if (toolName === 'submit_collected_data') {
           console.log('Data collection complete (raw):', JSON.stringify(input));
 
-          const payload = transformCollectedData(input as any) as unknown as Record<string, unknown>;
+          const payload = transformCollectedData(input as any)
           if (this.lastImageUrl) {
-            (payload as any).images = [this.lastImageUrl];
+            payload.images = [this.lastImageUrl];
           }
 
           console.log('Transformed listing payload:', JSON.stringify(payload));
@@ -238,7 +238,7 @@ Rules:
           }
 
           try {
-            await loginAndCreateListing(listingPayload);
+            await loginAndCreateListing(payload);
           } catch (error) {
             console.error('Failed to create listing on remote server', error);
           }
