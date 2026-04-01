@@ -26,7 +26,11 @@ beforeEach(() => {
 
 describe('createPmgListing', () => {
   it('uploads image and includes mediaId in listing payload', async () => {
-    mockLoginWith.mockResolvedValueOnce('user-token').mockResolvedValueOnce('admin-token');
+    // 3 logins when imageUrl is provided: upload token, listing token, admin token
+    mockLoginWith
+      .mockResolvedValueOnce('upload-token')
+      .mockResolvedValueOnce('listing-token')
+      .mockResolvedValueOnce('admin-token');
     mockUploadImage.mockResolvedValueOnce('media-abc-123');
     mockCreateListing.mockResolvedValueOnce({ id: 'listing-123', slug: 'golden-pups' });
     mockPayListingFee.mockResolvedValueOnce(undefined);
@@ -36,9 +40,9 @@ describe('createPmgListing', () => {
     const result = await createPmgListing({ images: [], title: 'test' } as any, 'https://stream.cdn/image.jpg');
 
     expect(result).toEqual({ id: 'listing-123', slug: 'golden-pups' });
-    expect(mockUploadImage).toHaveBeenCalledWith('user-token', 'https://stream.cdn/image.jpg');
+    expect(mockUploadImage).toHaveBeenCalledWith('upload-token', 'https://stream.cdn/image.jpg');
     expect(mockCreateListing).toHaveBeenCalledWith(
-      'user-token',
+      'listing-token',
       expect.objectContaining({ images: ['media-abc-123'] }),
     );
   });
