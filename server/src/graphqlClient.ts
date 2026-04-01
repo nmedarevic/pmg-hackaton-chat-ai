@@ -1,21 +1,5 @@
 import type { ListingPayload } from './transformCollectedData';
 
-const LOGIN_MUTATION = `
-  mutation Login($email: String!, $password: String!) {
-    login(email: $email, password: $password) {
-      accessToken {
-        token
-        __typename
-      }
-      refreshToken {
-        token
-        __typename
-      }
-      __typename
-    }
-  }
-`;
-
 const CREATE_LISTING_MUTATION = `
   mutation CreateNewListing($input: CreateNewListingInput!) {
     createNewListing(input: $input) {
@@ -37,7 +21,7 @@ const PUBLISH_LISTING_MUTATION = `
   }
 `;
 
-async function graphqlRequest({
+export async function graphqlRequest({
   query,
   variables,
   token,
@@ -47,7 +31,7 @@ async function graphqlRequest({
   variables: Record<string, unknown>;
   token?: string;
   operationName?: string;
-}) {
+}): Promise<Record<string, unknown>> {
   const serverUrl = process.env.PMG_SERVER_URL;
   if (!serverUrl) throw new Error('PMG_SERVER_URL is not set');
 
@@ -59,7 +43,7 @@ async function graphqlRequest({
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${serverUrl}`, {
+  const res = await fetch(serverUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify({ query, variables, operationName }),
@@ -72,54 +56,33 @@ async function graphqlRequest({
   return json.data;
 }
 
-async function loginWith(emailVar: string, passwordVar: string): Promise<string> {
-  const email = process.env[emailVar];
-  const password = process.env[passwordVar];
-  if (!email || !password) {
-    throw new Error(`${emailVar} and ${passwordVar} must be set`);
-  }
-
-  console.log('Logging in with email:', email, 'and password:', password);
-  const data = await graphqlRequest({ query: LOGIN_MUTATION, variables: { email, password }, operationName: 'Login' });
-  console.log('Login response:', data);
-  return data.login.accessToken.token;
-}
-
-export async function loginAndCreateListing(
-  listingPayload: ListingPayload,
+export async function createListing(
+  token: string,
+  payload: ListingPayload,
 ): Promise<{ id: string; slug: string }> {
-  const token = await loginWith('PMG_EMAIL_USER', 'PMG_PASSWORD_USER');
-  console.log('Logged in to remote server successfully');
-
   const data = await graphqlRequest({
     query: CREATE_LISTING_MUTATION,
-    variables: { input: listingPayload },
+    variables: { input: payload },
     token,
     operationName: 'CreateNewListing',
   });
+  return data.createNewListing as { id: string; slug: string };
+}
 
-  const { id, slug } = data.createNewListing as { id: string; slug: string };
-  console.log('Listing created successfully:', id, 'slug:', slug);
+export async function payListingFee(token: string, listingId: string): Promise<void> {
+  await graphqlRequest({
+    query: PAY_LISTING_FEE_MUTATION,
+    variables: { input: { id: listingId } },
+    token,
+    operationName: 'SubmitPendingPaymentListing',
+  });
+}
 
-  try {
-    const adminToken = await loginWith('PMG_ADMIN_EMAIL', 'PMG_ADMIN_PASSWORD');
-    await graphqlRequest({
-      query: PAY_LISTING_FEE_MUTATION,
-      variables: { input: { id } },
-      token: adminToken,
-      operationName: 'SubmitPendingPaymentListing',
-    });
-    console.log('Listing fee paid successfully');
-    await graphqlRequest({
-      query: PUBLISH_LISTING_MUTATION,
-      variables: { input: { listingIds: id } },
-      token: adminToken,
-      operationName: 'publishListing',
-    });
-    console.log('Listing published successfully');
-  } catch (error) {
-    console.error('Failed to pay fee or publish listing (listing still created):', error);
-  }
-
-  return { id, slug };
+export async function publishListing(token: string, listingId: string): Promise<void> {
+  await graphqlRequest({
+    query: PUBLISH_LISTING_MUTATION,
+    variables: { input: { listingIds: listingId } },
+    token,
+    operationName: 'publishListing',
+  });
 }
