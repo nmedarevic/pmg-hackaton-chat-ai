@@ -190,7 +190,7 @@ You are a friendly data collection assistant. Your job is to conversationally co
           try {
             await this.channel.sendEvent({
               type: 'data_collection_complete',
-              collected_data: payload,
+              collected_data: { title: payload.title },
             } as any);
           } catch (error) {
             console.error('Failed to send data_collection_complete event', error);
@@ -198,6 +198,7 @@ You are a friendly data collection assistant. Your job is to conversationally co
 
           try {
             const { slug } = await loginAndCreateListing(payload);
+            
             const clientUrl = process.env.PMG_CLIENT_URL;
             if (!clientUrl) {
               console.warn('PMG_CLIENT_URL is not set — preview URL will be incomplete');
