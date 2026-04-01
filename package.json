@@ -19,8 +19,8 @@
   },
   "scripts": {
     "build:frontend": "npm run build --prefix frontend",
-    "build:server": "npm run build --prefix server",
-    "build": "npm run build:frontend && npm run build:server",
+    "build:server": "npm ci --prefix server npm run build --prefix server",
+    "build": "npm ci --prefix frontend && npm run build:frontend",
     "start:frontend": "npm run start --prefix frontend",
     "start:server": "npm run start --prefix server",
     "start": "npm run start:frontend & npm run start:server",
