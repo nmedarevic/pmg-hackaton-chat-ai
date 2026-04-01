@@ -37,12 +37,15 @@ export async function graphqlRequest({
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'x-lms-proxy-api-token': process.env.LMS_PROXY_API_TOKEN || '',
   };
+  if (process.env.LMS_PROXY_API_TOKEN) {
+    headers['x-lms-proxy-api-token'] = process.env.LMS_PROXY_API_TOKEN;
+  }
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  console.log(`[graphqlRequest] ${operationName} | auth: ${headers['Authorization'] ? headers['Authorization'].slice(0, 30) + '...' : 'NONE'}`);
   const res = await fetch(serverUrl, {
     method: 'POST',
     headers,

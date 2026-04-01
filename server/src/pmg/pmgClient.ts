@@ -7,21 +7,17 @@ export async function createPmgListing(
   payload: ListingPayload,
   imageUrl: string | null,
 ): Promise<{ id: string; slug: string }> {
-  const uploadToken = await loginWith('PMG_EMAIL_USER', 'PMG_PASSWORD_USER');
+  const token = await loginWith('PMG_EMAIL_USER', 'PMG_PASSWORD_USER');
   console.log('Logged in to remote server successfully');
 
   let finalPayload = payload;
   if (imageUrl) {
-    const mediaId = await uploadImage(uploadToken, imageUrl);
+    const mediaId = await uploadImage(token, imageUrl);
     console.log('Image uploaded, mediaId:', mediaId);
     finalPayload = { ...payload, images: [mediaId] };
   }
 
-  const listingToken = imageUrl
-    ? await loginWith('PMG_EMAIL_USER', 'PMG_PASSWORD_USER')
-    : uploadToken;
-  console.log('Token ready for listing creation');
-  const { id, slug } = await createListing(listingToken, finalPayload);
+  const { id, slug } = await createListing(token, finalPayload);
   console.log('Listing created successfully:', id, 'slug:', slug);
 
   try {
