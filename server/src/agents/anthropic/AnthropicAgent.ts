@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { AnthropicResponseHandler } from './AnthropicResponseHandler';
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import type { Channel, Event, StreamChat } from 'stream-chat';
-import type { AIAgent } from '../types';
+import type { AIAgent, UserLocation } from '../types';
 import { buildMessageContent } from './buildMessageContent';
 import { transformCollectedData } from '../../transformCollectedData';
 import { loginAndCreateListing } from '../../graphqlClient';
@@ -13,21 +13,26 @@ const PET_SCHEMA: Record<string, unknown> = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, '../../../../schema/petSchema.json'), 'utf-8'),
 );
 
-const SYSTEM_PROMPT = `You are a pet listing assistant. Your job is to help the user create a complete pet advert.
+const buildSystemPrompt = (userLocation?: UserLocation): string => {
+  const locationContext = userLocation
+    ? `\n\nThe user's location has been automatically detected: latitude ${userLocation.latitude.toFixed(4)}, longitude ${userLocation.longitude.toFixed(4)}. You do NOT need to ask for location — it will be included in the listing automatically.`
+    : '';
+
+  return `You are a pet listing assistant. Your job is to help the user create a complete pet advert.
 
 ## Step 1 — Images
 If no image has been uploaded yet, ask the user to upload one or more photos of their pet(s). Encourage them to upload as many photos as they like — all images will be included in the listing. Do not proceed without at least one photo.
 
-## Step 2 — Analyse the image(s)
-Once images are provided, extract the following and pre-fill them without asking:
+## Step 2 — Analyse the first image
+Once the first image is provided, extract the following and pre-fill them without asking:
 - **breed**: identify the breed and convert it to dot-notation camelCase prefixed with "pets.dogs.forSale.", e.g. "pets.dogs.forSale.labradorRetriever", "pets.dogs.forSale.frenchBulldog", "pets.dogs.forSale.goldenRetriever". Use your best judgement for the camelCase key.
 - **advert_type**: default to "pets.dogs.forSale" unless context suggests otherwise.
 - **title**: a short, catchy listing title.
 - **description**: 2-3 sentence engaging listing description.
 
-If multiple pets appear in the images, acknowledge them and ask the user to confirm how many males and females are in the litter.
+If multiple pets appear in the image, acknowledge them and ask the user to confirm how many males and females are in the litter.
 
-Present the pre-filled fields to the user so they can confirm or correct them. If the user uploads additional photos at any point, accept them and add them to the listing.
+Present the pre-filled fields to the user so they can confirm or correct them. If the user uploads additional photos at any point, acknowledge them and confirm they have been added to the listing.
 
 ## Step 3 — Collect remaining fields
 Ask the user (one or two at a time) for:
@@ -44,18 +49,22 @@ Once you have all fields confirmed, call submit_collected_data with the complete
 - Wanted → pets.dogs.wanted
 - Rescue / Rehome → pets.dogs.rescueRehome
 
-Be conversational and friendly. If the user corrects a value, accept it. The user can upload more photos at any time — acknowledge new images and confirm they have been added to the listing.`;
+Be conversational and friendly. If the user corrects a value, accept it. The user can upload more photos at any time — acknowledge new images and confirm they have been added to the listing.${locationContext}`;
+};
 
 export class AnthropicAgent implements AIAgent {
   private anthropic?: Anthropic;
   private handlers: AnthropicResponseHandler[] = [];
   private lastInteractionTs = Date.now();
   private imageUrls: string[] = [];
+  /** True once the first image has been sent to Claude for breed extraction */
+  private breedImageAnalyzed = false;
 
   constructor(
     readonly chatClient: StreamChat,
     readonly channel: Channel,
     private readonly schema?: Record<string, unknown>,
+    private readonly userLocation?: UserLocation,
   ) {}
 
   dispose = async () => {
@@ -83,7 +92,7 @@ export class AnthropicAgent implements AIAgent {
     this.chatClient.on('message.new', this.handleMessage);
   };
 
-  private buildSystemPrompt(): string | undefined {
+  private buildAgentSystemPrompt(): string | undefined {
     if (!this.schema) return undefined;
 
     return `You are a friendly data collection assistant. Your job is to conversationally collect the following information from the user.
@@ -148,7 +157,7 @@ Rules:
     this.lastInteractionTs = Date.now();
 
     const isThreadReply = e.message.parent_id !== undefined;
-    const historySize = this.schema ? 20 : 20;
+    const historySize = 20;
 
     // For non-thread messages, the current message is already the last entry
     // in channel.state.messages — exclude it so we can re-add it with vision content.
@@ -160,6 +169,24 @@ Rules:
 
     const historyBase = isThreadReply ? historySlice : historySlice.slice(0, -1);
 
+    // Only send images to Claude for vision on the FIRST image upload (breed extraction).
+    // Subsequent images are tracked in this.imageUrls for listing inclusion but NOT
+    // re-analysed — we just tell the user they've been added.
+    let attachmentsForVision = e.message.attachments;
+    if (newImageUrls.length > 0) {
+      if (!this.breedImageAnalyzed) {
+        // First-ever image: use only the first one for breed analysis
+        this.breedImageAnalyzed = true;
+        const firstImageAttachment = e.message.attachments?.find(
+          (a) => a.type === 'image' && a.image_url,
+        );
+        attachmentsForVision = firstImageAttachment ? [firstImageAttachment] : [];
+      } else {
+        // Additional images: skip vision, just ack in the message text
+        attachmentsForVision = [];
+      }
+    }
+
     const messages: MessageParam[] = [
       ...historyBase.map((msg) => ({
         role: (msg.user?.id.startsWith('ai-bot') ? 'assistant' : 'user') as
@@ -169,16 +196,16 @@ Rules:
       })),
       {
         role: 'user',
-        content: buildMessageContent(message, e.message.attachments),
+        content: buildMessageContent(message, attachmentsForVision),
       },
     ];
 
-    const systemPrompt = this.buildSystemPrompt();
+    const systemPrompt = this.buildAgentSystemPrompt();
     const tool = this.buildTool();
 
     const anthropicStream = await this.anthropic.messages.create({
       max_tokens: 1024,
-      system: systemPrompt ?? SYSTEM_PROMPT,
+      system: systemPrompt ?? buildSystemPrompt(this.userLocation),
       messages,
       model: 'claude-sonnet-4-5',
       tools: [tool],
@@ -214,6 +241,12 @@ Rules:
           const payload = transformCollectedData(input as any)
           if (this.imageUrls.length > 0) {
             payload.images = [...this.imageUrls];
+          }
+          if (this.userLocation) {
+            payload.location = {
+              latitude: this.userLocation.latitude,
+              longitude: this.userLocation.longitude,
+            };
           }
 
           console.log('Transformed listing payload:', JSON.stringify(payload));
