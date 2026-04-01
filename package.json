@@ -28,6 +28,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }
 }
