@@ -1,4 +1,4 @@
-import { AgentPlatform, AIAgent } from './types';
+import { AgentPlatform, AIAgent, UserLocation } from './types';
 import { StreamChat } from 'stream-chat';
 import { OpenAIAgent } from './openai/OpenAIAgent';
 import { AnthropicAgent } from './anthropic/AnthropicAgent';
@@ -10,6 +10,7 @@ export const createAgent = async (
   channel_type: string,
   channel_id: string,
   schema?: Record<string, unknown>,
+  userLocation?: UserLocation,
 ): Promise<AIAgent> => {
   const client = new StreamChat(apiKey, { allowServerSideConnect: true });
   const token = serverClient.createToken(user_id);
@@ -22,5 +23,5 @@ export const createAgent = async (
   if (platform === AgentPlatform.OPENAI) {
     return new OpenAIAgent(client, channel);
   }
-  return new AnthropicAgent(client, channel, schema);
+  return new AnthropicAgent(client, channel, schema, userLocation);
 };
