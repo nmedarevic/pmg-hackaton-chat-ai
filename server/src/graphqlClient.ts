@@ -40,6 +40,7 @@ async function graphqlRequest({
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'x-lms-proxy-api-token': process.env.LMS_PROXY_API_TOKEN || '',
   };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
