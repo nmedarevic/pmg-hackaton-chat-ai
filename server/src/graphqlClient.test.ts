@@ -15,8 +15,8 @@ beforeEach(() => {
   vi.resetModules();
   vi.resetAllMocks();
   process.env.PMG_SERVER_URL = 'https://pmg.example.com/graphql';
-  process.env.PMG_EMAIL = 'user@test.com';
-  process.env.PMG_PASSWORD = 'userpass';
+  process.env.PMG_EMAIL_USER = 'user@test.com';
+  process.env.PMG_PASSWORD_USER = 'userpass';
   process.env.PMG_ADMIN_EMAIL = 'admin@test.com';
   process.env.PMG_ADMIN_PASSWORD = 'adminpass';
   process.env.PMG_CLIENT_URL = 'https://app.pmg.com';

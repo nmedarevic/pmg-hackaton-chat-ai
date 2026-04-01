@@ -87,7 +87,7 @@ async function loginWith(emailVar: string, passwordVar: string): Promise<string>
 export async function loginAndCreateListing(
   listingPayload: ListingPayload,
 ): Promise<{ id: string; slug: string }> {
-  const token = await loginWith('PMG_EMAIL', 'PMG_PASSWORD');
+  const token = await loginWith('PMG_EMAIL_USER', 'PMG_PASSWORD_USER');
   console.log('Logged in to remote server successfully');
 
   const data = await graphqlRequest({
