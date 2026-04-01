@@ -26,9 +26,5 @@
     "start": "npm run start:frontend & npm run start:server",
     "dev:frontend": "npm run dev --prefix frontend",
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
   }
 }
