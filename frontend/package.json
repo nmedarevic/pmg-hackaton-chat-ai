@@ -4,7 +4,9 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
+		"predev": "cp ../schema/petSchema.json src/schema/petSchema.json",
 		"dev": "vite",
+		"prebuild": "cp ../schema/petSchema.json src/schema/petSchema.json",
 		"build": "tsc -b && vite build",
 		"lint": "eslint .",
 		"preview": "vite preview",

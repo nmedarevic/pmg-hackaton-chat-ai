@@ -14,7 +14,7 @@ import {
 	useMessageComposer,
 } from "stream-chat-react";
 import { startAiAgent } from "../api";
-import petSchema from "../../../schema/petSchema.json";
+import petSchema from "../schema/petSchema.json";
 
 const isWatchedByAI = (channel: Channel) => {
 	return Object.keys(channel.state.watchers).some((watcher) =>
@@ -47,10 +47,9 @@ export const Composer = () => {
 	}, [client, composer]);
 
 	useEffect(() => {
-		const listener = channel.on((event) => {
-			if (event.type === 'data_collection_complete') {
-				console.log('Data collection complete:', event.collected_data);
-			}
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const listener = channel.on('data_collection_complete' as any, (event: any) => {
+			console.log('Data collection complete:', event.collected_data);
 		});
 		return () => listener.unsubscribe();
 	}, [channel]);
