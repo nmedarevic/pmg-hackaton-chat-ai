@@ -65,24 +65,12 @@ async function graphqlRequest({
   return json.data;
 }
 
-async function login(): Promise<string> {
-  const email = process.env.PMG_EMAIL;
-  const password = process.env.PMG_PASSWORD;
+async function loginWith(emailVar: string, passwordVar: string): Promise<string> {
+  const email = process.env[emailVar];
+  const password = process.env[passwordVar];
   if (!email || !password) {
-    throw new Error('PMG_EMAIL and PMG_PASSWORD must be set');
+    throw new Error(`${emailVar} and ${passwordVar} must be set`);
   }
-
-  const data = await graphqlRequest({ query: LOGIN_MUTATION, variables: { email, password }, operationName: 'Login' });
-  return data.login.accessToken.token;
-}
-
-async function loginAsAdmin(): Promise<string> {
-  const email = process.env.PMG_ADMIN_EMAIL;
-  const password = process.env.PMG_ADMIN_PASSWORD;
-  if (!email || !password) {
-    throw new Error('PMG_ADMIN_EMAIL and PMG_ADMIN_PASSWORD must be set');
-  }
-
   const data = await graphqlRequest({ query: LOGIN_MUTATION, variables: { email, password }, operationName: 'Login' });
   return data.login.accessToken.token;
 }
@@ -90,7 +78,7 @@ async function loginAsAdmin(): Promise<string> {
 export async function loginAndCreateListing(
   listingPayload: ListingPayload,
 ): Promise<{ id: string; slug: string }> {
-  const token = await login();
+  const token = await loginWith('PMG_EMAIL', 'PMG_PASSWORD');
   console.log('Logged in to remote server successfully');
 
   const data = await graphqlRequest({
@@ -104,7 +92,7 @@ export async function loginAndCreateListing(
   console.log('Listing created successfully:', id, 'slug:', slug);
 
   try {
-    const adminToken = await loginAsAdmin();
+    const adminToken = await loginWith('PMG_ADMIN_EMAIL', 'PMG_ADMIN_PASSWORD');
     await graphqlRequest({
       query: PUBLISH_LISTING_MUTATION,
       variables: { input: { listingIds: id } },

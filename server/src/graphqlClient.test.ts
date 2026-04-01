@@ -12,6 +12,7 @@ function makeGraphQLResponse(data: unknown) {
 }
 
 beforeEach(() => {
+  vi.resetModules();
   vi.resetAllMocks();
   process.env.PMG_SERVER_URL = 'https://pmg.example.com/graphql';
   process.env.PMG_EMAIL = 'user@test.com';
