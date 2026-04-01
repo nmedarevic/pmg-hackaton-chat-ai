@@ -2,4 +2,4 @@
 buildCommand = "npm install && npm run build"
 
 [deploy]
-startCommand = "node --import tsx src/index.ts"
+startCommand = "npx tsx src/index.ts"
