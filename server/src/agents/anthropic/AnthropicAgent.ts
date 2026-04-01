@@ -197,7 +197,16 @@ You are a friendly data collection assistant. Your job is to conversationally co
           }
 
           try {
-            await loginAndCreateListing(payload);
+            const { slug } = await loginAndCreateListing(payload);
+            const clientUrl = process.env.PMG_CLIENT_URL;
+            if (!clientUrl) {
+              console.warn('PMG_CLIENT_URL is not set — preview URL will be incomplete');
+            }
+            const previewUrl = `${clientUrl ?? ''}/classifieds/${slug}`;
+            await this.channel.sendMessage({
+              text: `Your listing has been created! Preview it here: ${previewUrl}`,
+              ai_generated: true,
+            });
           } catch (error) {
             console.error('Failed to create listing on remote server', error);
           }
