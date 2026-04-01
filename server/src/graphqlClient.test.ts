@@ -36,7 +36,11 @@ describe('loginAndCreateListing', () => {
     mockFetch.mockResolvedValueOnce(
       makeGraphQLResponse({ login: { accessToken: { token: 'admin-token' } } }),
     );
-    // Call 4: publishListing
+    // Call 4: pay listing fee
+    mockFetch.mockResolvedValueOnce(
+      makeGraphQLResponse({ submitPendingPaymentListing: true }),
+    );
+    // Call 5: publishListing
     mockFetch.mockResolvedValueOnce(
       makeGraphQLResponse({ publishListing: true }),
     );
@@ -45,10 +49,10 @@ describe('loginAndCreateListing', () => {
     const result = await loginAndCreateListing({} as any);
 
     expect(result).toEqual({ id: 'listing-123', slug: 'golden-retriever-pups' });
-    expect(mockFetch).toHaveBeenCalledTimes(4);
+    expect(mockFetch).toHaveBeenCalledTimes(5);
   });
 
-  it('still returns slug even when publishListing throws', async () => {
+  it('still returns slug even when pay fee or publishListing throws', async () => {
     mockFetch.mockResolvedValueOnce(
       makeGraphQLResponse({ login: { accessToken: { token: 'user-token' } } }),
     );
@@ -59,8 +63,8 @@ describe('loginAndCreateListing', () => {
     mockFetch.mockResolvedValueOnce(
       makeGraphQLResponse({ login: { accessToken: { token: 'admin-token' } } }),
     );
-    // publish throws
-    mockFetch.mockRejectedValueOnce(new Error('publish failed'));
+    // pay fee throws
+    mockFetch.mockRejectedValueOnce(new Error('pay fee failed'));
 
     const { loginAndCreateListing } = await import('./graphqlClient');
     const result = await loginAndCreateListing({} as any);

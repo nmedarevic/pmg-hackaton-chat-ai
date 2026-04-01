@@ -25,6 +25,12 @@ const CREATE_LISTING_MUTATION = `
   }
 `;
 
+const PAY_LISTING_FEE_MUTATION = `
+  mutation SubmitPendingPaymentListing($input: SubmitPendingPaymentListingInput!) {
+    submitPendingPaymentListing(input: $input)
+  }
+`;
+
 const PUBLISH_LISTING_MUTATION = `
   mutation publishListing($input: PublishListingInput!) {
     publishListing(input: $input)
@@ -71,7 +77,10 @@ async function loginWith(emailVar: string, passwordVar: string): Promise<string>
   if (!email || !password) {
     throw new Error(`${emailVar} and ${passwordVar} must be set`);
   }
+
+  console.log('Logging in with email:', email, 'and password:', password);
   const data = await graphqlRequest({ query: LOGIN_MUTATION, variables: { email, password }, operationName: 'Login' });
+  console.log('Login response:', data);
   return data.login.accessToken.token;
 }
 
@@ -94,6 +103,13 @@ export async function loginAndCreateListing(
   try {
     const adminToken = await loginWith('PMG_ADMIN_EMAIL', 'PMG_ADMIN_PASSWORD');
     await graphqlRequest({
+      query: PAY_LISTING_FEE_MUTATION,
+      variables: { input: { id } },
+      token: adminToken,
+      operationName: 'SubmitPendingPaymentListing',
+    });
+    console.log('Listing fee paid successfully');
+    await graphqlRequest({
       query: PUBLISH_LISTING_MUTATION,
       variables: { input: { listingIds: id } },
       token: adminToken,
@@ -101,7 +117,7 @@ export async function loginAndCreateListing(
     });
     console.log('Listing published successfully');
   } catch (error) {
-    console.error('Failed to publish listing (listing still created):', error);
+    console.error('Failed to pay fee or publish listing (listing still created):', error);
   }
 
   return { id, slug };
