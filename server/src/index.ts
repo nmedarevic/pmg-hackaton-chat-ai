@@ -15,7 +15,7 @@ process.on('unhandledRejection', (reason) => {
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 
 // Map to store the AI Agent instances
 // [cid: string]: AI Agent

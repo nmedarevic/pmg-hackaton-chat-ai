@@ -87,24 +87,6 @@ export async function loginAndCreateListing(
   const token = await login();
   console.log('Logged in to remote server successfully');
 
-  const input = {
-    category: listingPayload.category,
-    title: listingPayload.title,
-    description: listingPayload.description,
-    price: listingPayload.price,
-    depositAmount: listingPayload.depositAmount,
-    requiredDeposit: listingPayload.requiredDeposit,
-    hidePrice: listingPayload.hidePrice,
-    preferredContact: listingPayload.preferredContact,
-    location: {
-      coordinates: { latitude: 0, longitude: 0 },
-      raw: {},
-    },
-    attributes: listingPayload.attributes,
-    images: listingPayload.images,
-    videos: listingPayload.videos,
-  };
-
-  const data = await graphqlRequest({ query: CREATE_LISTING_MUTATION, variables: { input }, token, operationName: "CreateNewListing" });
+  const data = await graphqlRequest({ query: CREATE_LISTING_MUTATION, variables: { input: listingPayload }, token, operationName: "CreateNewListing" });
   console.log('Listing created successfully:', data.createNewListing.id);
 }
