@@ -108,6 +108,6 @@ export function transformCollectedData(input: CollectedData): ListingPayload {
     },
     attributes,
     videos: [],
-    images: ['3794feb5-5fcf-4747-a8e3-fbd766520148'],
+    images: [],
   };
 }
