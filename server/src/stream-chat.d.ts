@@ -4,5 +4,6 @@ declare module "stream-chat" {
   interface CustomMessageData {
     generating?: boolean;
     ai_generated?: boolean;
+    options?: { label: string; value: string }[];
   }
 }

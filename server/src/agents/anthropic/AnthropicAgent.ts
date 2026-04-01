@@ -220,7 +220,7 @@ You are a friendly data collection assistant. Your job is to conversationally co
         );
         if (options) {
           await this.chatClient.partialUpdateMessage(channelMessage.id, {
-            set: { options } as any,
+            set: { options },
           });
         }
       },
