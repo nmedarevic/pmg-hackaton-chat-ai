@@ -13,6 +13,17 @@ process.on('unhandledRejection', (reason) => {
   console.error('Unhandled Rejection:', reason);
 });
 
+process.on('SIGTERM', () => {                                                                                        
+  console.log('SIGTERM received, shutting down...');                                                                 
+  // cleanup: close server, DB connections, etc.                                                                     
+  process.exit(0);                                                                                                 
+});                                                                                                                  
+                                                                                                                   
+process.on('SIGINT', () => {                                                                                         
+  // same cleanup for Ctrl+C                                                                                       
+  process.exit(0);                                                                                                 
+});
+
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));

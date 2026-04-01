@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "tsc && node dist/index.js",
+    "start": "node --import tsx src/index.ts",
     "test": "vitest run --config vitest.config.mjs --passWithNoTests"
   },
   "keywords": [],
@@ -21,7 +21,8 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "openai": "^5.20.1",
-    "stream-chat": "^9.19.0"
+    "stream-chat": "^9.19.0",
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
