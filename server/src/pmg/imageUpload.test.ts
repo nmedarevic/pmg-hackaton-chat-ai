@@ -76,7 +76,7 @@ describe('uploadImage', () => {
 
     expect(mockGraphqlRequest).toHaveBeenCalledWith(
       expect.objectContaining({
-        variables: { input: { uploadType: 'ListingMedia', contentType: 'image/jpeg' } },
+        variables: { input: { uploadType: 'LISTING_MEDIA', contentType: 'image/jpeg' } },
       }),
     );
   });

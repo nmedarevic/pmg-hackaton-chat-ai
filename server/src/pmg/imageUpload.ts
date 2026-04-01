@@ -30,7 +30,7 @@ export async function uploadImage(token: string, imageUrl: string): Promise<stri
   // Step 2: get pre-signed S3 form from PMG
   const uploadData = await graphqlRequest({
     query: CREATE_UPLOAD_FORM_MUTATION,
-    variables: { input: { uploadType: 'ListingMedia', contentType } },
+    variables: { input: { uploadType: 'LISTING_MEDIA', contentType } },
     token,
     operationName: 'CreateUploadForm',
   });
