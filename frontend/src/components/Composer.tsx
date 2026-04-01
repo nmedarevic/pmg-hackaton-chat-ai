@@ -14,7 +14,7 @@ import {
 	useMessageComposer,
 } from "stream-chat-react";
 import { startAiAgent } from "../api";
-import petSchema from "../schema/petSchema.json";
+import petSchema from "../../../schema/petSchema.json";
 
 const isWatchedByAI = (channel: Channel) => {
 	return Object.keys(channel.state.watchers).some((watcher) =>
