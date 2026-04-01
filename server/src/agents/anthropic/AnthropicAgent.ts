@@ -4,6 +4,7 @@ import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import type { Channel, Event, StreamChat } from 'stream-chat';
 import type { AIAgent } from '../types';
 import { buildMessageContent } from './buildMessageContent';
+import { detectEnumOptions } from './detectEnumOptions';
 import { transformCollectedData } from '../../transformCollectedData';
 import { loginAndCreateListing } from '../../graphqlClient';
 import * as fs from 'fs';
@@ -211,6 +212,17 @@ You are a friendly data collection assistant. Your job is to conversationally co
           } catch (error) {
             console.error('Failed to create listing on remote server', error);
           }
+        }
+      },
+      async (text: string) => {
+        const options = detectEnumOptions(
+          text,
+          PET_SCHEMA as Record<string, { enum?: string[]; [key: string]: unknown }>,
+        );
+        if (options) {
+          await this.chatClient.partialUpdateMessage(channelMessage.id, {
+            set: { options },
+          });
         }
       },
     );

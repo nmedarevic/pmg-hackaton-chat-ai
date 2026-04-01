@@ -18,6 +18,7 @@ export class AnthropicResponseHandler {
       toolName: string,
       input: Record<string, unknown>,
     ) => void,
+    private readonly onComplete?: (text: string) => Promise<void>,
   ) {
     this.chatClient.on('ai_indicator.stop', this.handleStopGenerating);
   }
@@ -114,6 +115,7 @@ export class AnthropicResponseHandler {
         await this.chatClient.partialUpdateMessage(this.message.id, {
           set: { text: this.message_text, generating: false },
         });
+        await this.onComplete?.(this.message_text);
         await this.channel.sendEvent({
           type: 'ai_indicator.clear',
           message_id: this.message.id,
