@@ -26,7 +26,7 @@ process.on('SIGINT', () => {
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+app.use(cors({ origin: 'https://frontend-production-b34e.up.railway.app' }));
 
 // Map to store the AI Agent instances
 // [cid: string]: AI Agent
