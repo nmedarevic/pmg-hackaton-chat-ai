@@ -9,4 +9,4 @@ if (!apiKey || !apiSecret) {
   );
 }
 
-export const serverClient = new StreamChat(apiKey, apiSecret);
+export const serverClient = new StreamChat(apiKey, apiSecret, { timeout: 10000 });
