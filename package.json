@@ -26,5 +26,8 @@
     "start": "npm run start:frontend & npm run start:server",
     "dev:frontend": "npm run dev --prefix frontend",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "tsc": "^2.0.4"
   }
 }
