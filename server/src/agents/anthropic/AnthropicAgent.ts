@@ -5,7 +5,7 @@ import type { Channel, Event, StreamChat } from 'stream-chat';
 import type { AIAgent } from '../types';
 import { buildMessageContent } from './buildMessageContent';
 import { transformCollectedData } from '../../transformCollectedData';
-import { loginAndCreateListing } from '../../graphqlClient';
+import { createPmgListing } from '../../pmg/pmgClient';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -180,13 +180,10 @@ You are a friendly data collection assistant. Your job is to conversationally co
         if (toolName === 'submit_collected_data') {
           console.log('Data collection complete (raw):', JSON.stringify(input));
 
-          const payload = transformCollectedData(input as any)
-          
-          // if (this.lastImageUrl) {
-          //   payload.images = [this.lastImageUrl];
-          // }
+          const payload = transformCollectedData(input as any);
 
           console.log('Transformed listing payload:', JSON.stringify(payload));
+
           try {
             await this.channel.sendEvent({
               type: 'data_collection_complete',
@@ -197,8 +194,8 @@ You are a friendly data collection assistant. Your job is to conversationally co
           }
 
           try {
-            const { slug } = await loginAndCreateListing(payload);
-            
+            const { slug } = await createPmgListing(payload, this.lastImageUrl);
+
             const clientUrl = process.env.PMG_CLIENT_URL;
             if (!clientUrl) {
               console.warn('PMG_CLIENT_URL is not set — preview URL will be incomplete');
