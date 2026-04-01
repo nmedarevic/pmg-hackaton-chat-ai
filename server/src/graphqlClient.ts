@@ -2,25 +2,32 @@ import type { ListingPayload } from './transformCollectedData';
 
 const LOGIN_MUTATION = `
   mutation Login($email: String!, $password: String!) {
-      login(email: $email, password: $password) {
-        accessToken {
-          token
-          __typename
-        }
-        refreshToken {
-          token
-          __typename
-        }
+    login(email: $email, password: $password) {
+      accessToken {
+        token
         __typename
       }
+      refreshToken {
+        token
+        __typename
+      }
+      __typename
     }
+  }
 `;
 
 const CREATE_LISTING_MUTATION = `
   mutation CreateNewListing($input: CreateNewListingInput!) {
     createNewListing(input: $input) {
       id
+      slug
     }
+  }
+`;
+
+const PUBLISH_LISTING_MUTATION = `
+  mutation publishListing($input: PublishListingInput!) {
+    publishListing(input: $input)
   }
 `;
 
@@ -45,18 +52,6 @@ async function graphqlRequest({
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  console.log('\n\n', "body", JSON.stringify({ query, variables }), '\n\n');
-console.log('\n\n', `${serverUrl}`, {
-    method: 'POST',
-    headers,
-    body: { query, variables, operationName } as any,
-  }, '\n\n');
-  console.log('\n\n', "body", JSON.stringify({ query, variables }), '\n\n');
-console.log('\n\n', `${serverUrl}`, {
-    method: 'POST',
-    headers,
-    body: { query, variables, operationName } as any,
-  }, '\n\n');
   const res = await fetch(`${serverUrl}`, {
     method: 'POST',
     headers,
@@ -77,16 +72,49 @@ async function login(): Promise<string> {
     throw new Error('PMG_EMAIL and PMG_PASSWORD must be set');
   }
 
-  const data = await graphqlRequest({ query: LOGIN_MUTATION, variables: { email, password }, operationName: "Login" });
+  const data = await graphqlRequest({ query: LOGIN_MUTATION, variables: { email, password }, operationName: 'Login' });
+  return data.login.accessToken.token;
+}
+
+async function loginAsAdmin(): Promise<string> {
+  const email = process.env.PMG_ADMIN_EMAIL;
+  const password = process.env.PMG_ADMIN_PASSWORD;
+  if (!email || !password) {
+    throw new Error('PMG_ADMIN_EMAIL and PMG_ADMIN_PASSWORD must be set');
+  }
+
+  const data = await graphqlRequest({ query: LOGIN_MUTATION, variables: { email, password }, operationName: 'Login' });
   return data.login.accessToken.token;
 }
 
 export async function loginAndCreateListing(
   listingPayload: ListingPayload,
-): Promise<void> {
+): Promise<{ id: string; slug: string }> {
   const token = await login();
   console.log('Logged in to remote server successfully');
 
-  const data = await graphqlRequest({ query: CREATE_LISTING_MUTATION, variables: { input: listingPayload }, token, operationName: "CreateNewListing" });
-  console.log('Listing created successfully:', data.createNewListing.id);
+  const data = await graphqlRequest({
+    query: CREATE_LISTING_MUTATION,
+    variables: { input: listingPayload },
+    token,
+    operationName: 'CreateNewListing',
+  });
+
+  const { id, slug } = data.createNewListing as { id: string; slug: string };
+  console.log('Listing created successfully:', id, 'slug:', slug);
+
+  try {
+    const adminToken = await loginAsAdmin();
+    await graphqlRequest({
+      query: PUBLISH_LISTING_MUTATION,
+      variables: { input: { listingIds: id } },
+      token: adminToken,
+      operationName: 'publishListing',
+    });
+    console.log('Listing published successfully');
+  } catch (error) {
+    console.error('Failed to publish listing (listing still created):', error);
+  }
+
+  return { id, slug };
 }
