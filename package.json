@@ -28,6 +28,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "tsc": "^2.0.4"
+    "typescript": "^6.0.2"
   }
 }
