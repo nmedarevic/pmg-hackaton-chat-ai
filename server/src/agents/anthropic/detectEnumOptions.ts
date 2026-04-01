@@ -1,11 +1,9 @@
 import { getEnumOptions, type ChipOption } from './getEnumOptions';
 
-// Ordered: father/mother must come before breed to avoid substring false-match on "breed"
+// Breed fields are auto-detected from the image by the AI, so only show chips for fields
+// the user genuinely needs to choose manually.
 const FIELD_KEYWORDS: [fieldName: string, keywords: string[]][] = [
-  ['father_breed', ['father']],
-  ['mother_breed', ['mother']],
-  ['breed',        ['breed']],
-  ['advert_type',  ['type of advert', 'advert type', 'what type', 'type would']],
+  ['advert_type', ['type of advert', 'advert type', 'what type', 'type would']],
 ];
 
 export function detectEnumOptions(

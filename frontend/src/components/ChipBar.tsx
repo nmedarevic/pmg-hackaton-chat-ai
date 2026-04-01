@@ -12,7 +12,9 @@ export const ChipBar = ({ options, onSelect }: ChipBarProps) => {
         display: "flex",
         flexWrap: "wrap",
         gap: "8px",
-        padding: "8px 16px 4px",
+        padding: "0 0 8px",
+        maxWidth: "800px",
+        width: "100%",
       }}
     >
       {options.map((opt) => (

@@ -18,25 +18,19 @@ describe('detectEnumOptions', () => {
     ]);
   });
 
-  it('returns breed options when text mentions "breed" without mother/father', () => {
+  it('returns null for breed questions (AI infers breed from image)', () => {
     const result = detectEnumOptions("What is the breed of your pet?", schema);
-    expect(result).toEqual([
-      { label: 'Labrador Retriever', value: 'pets.dogs.forSale.labradorRetriever' },
-    ]);
+    expect(result).toBeNull();
   });
 
-  it('returns mother_breed options (not breed) when text mentions "mother"', () => {
+  it('returns null for mother breed questions (AI infers from image)', () => {
     const result = detectEnumOptions("What is the mother's breed?", schema);
-    expect(result).toEqual([
-      { label: 'Golden Retriever', value: 'pets.dogs.forSale.goldenRetriever' },
-    ]);
+    expect(result).toBeNull();
   });
 
-  it('returns father_breed options (not breed) when text mentions "father"', () => {
+  it('returns null for father breed questions (AI infers from image)', () => {
     const result = detectEnumOptions("What is the father's breed?", schema);
-    expect(result).toEqual([
-      { label: 'French Bulldog', value: 'pets.dogs.forSale.frenchBulldog' },
-    ]);
+    expect(result).toBeNull();
   });
 
   it('returns null when text does not match any enum field', () => {
