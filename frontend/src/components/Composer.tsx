@@ -52,7 +52,9 @@ export const Composer = () => {
 		const model = "claude-haiku-4-5";
 
 		if (!isWatchedByAI(channel)) {
-			await startAiAgent(channel, model, platform, petSchema);
+			const location = await getUserLocation();
+			console.log('\n\n', "Location", location, '\n\n');
+			await startAiAgent(channel, model, platform, petSchema, location);
 		}
 
 		await sendMessage(composedData);
@@ -128,6 +130,7 @@ export const Composer = () => {
 
 				if (!isWatchedByAI(channel)) {
 					const location = await getUserLocation();
+					console.log('\n\n', "Location", location, '\n\n');
 					await startAiAgent(channel, model, platform, petSchema, location);
 				}
 

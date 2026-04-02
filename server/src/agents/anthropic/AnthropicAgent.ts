@@ -6,6 +6,7 @@ import type { AIAgent, UserLocation } from '../types';
 import { buildMessageContent } from './buildMessageContent';
 import { detectEnumOptions } from './detectEnumOptions';
 import { transformCollectedData } from '../../transformCollectedData';
+import { geocodeLocation } from '../../geocodeLocation';
 import { createPmgListing } from '../../pmg/pmgClient';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -184,7 +185,17 @@ You are a friendly data collection assistant. Your job is to conversationally co
         if (toolName === 'submit_collected_data') {
           console.log('Data collection complete (raw):', JSON.stringify(input));
 
-          const payload = transformCollectedData(input as any);
+          const locationData = this.userLocation
+            ? await geocodeLocation(this.userLocation.latitude, this.userLocation.longitude)
+            : null;
+
+          if (locationData) {
+            console.log('[AnthropicAgent] Geocoded location:', locationData.postalCode, locationData.city);
+          } else {
+            console.warn('[AnthropicAgent] No geocoded location — using hardcoded fallback');
+          }
+
+          const payload = transformCollectedData(input as any, locationData);
 
           console.log('Transformed listing payload:', JSON.stringify(payload));
 
