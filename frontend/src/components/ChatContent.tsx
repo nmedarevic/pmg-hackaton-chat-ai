@@ -10,7 +10,7 @@ import { MessageBubble } from "./MessageBubble";
 import { AIStateIndicator } from "./AIStateIndicator";
 import { useEffect } from "react";
 import { nanoid } from "nanoid";
-import { startAiAgent } from "../api";
+import { getUserLocation, startAiAgent } from "../api";
 
 export const ChatContent = () => {
 	const { setActiveChannel, client, channel } = useChatContext();
@@ -30,10 +30,13 @@ export const ChatContent = () => {
 	useEffect(() => {
 		if (!channel) return;
 		const autoStart = async () => {
+			console.log('\n\n', "Start", '\n\n');
 			if (!channel.initialized) {
 				await channel.watch();
 			}
-			await startAiAgent(channel, "claude-sonnet-4-5", "anthropic");
+			const location = await getUserLocation();
+			console.log('\n\n', "Location", location, '\n\n');
+			await startAiAgent(channel, "claude-sonnet-4-5", "anthropic", undefined, location);
 		};
 		autoStart().catch(console.error);
 	}, [channel?.id]);
