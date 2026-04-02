@@ -198,7 +198,7 @@ You are a friendly data collection assistant. Your job is to conversationally co
           }
 
           try {
-            const { slug } = await createPmgListing(payload, this.lastImageUrl);
+            const { slug } = await createPmgListing(payload, this.imageUrls.at(-1) ?? null);
 
             const clientUrl = process.env.PMG_CLIENT_URL;
             if (!clientUrl) {
