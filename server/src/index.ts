@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { AgentPlatform, AIAgent } from './agents/types';
+import { AgentPlatform, AIAgent, UserLocation } from './agents/types';
 import { createAgent } from './agents/createAgent';
 import { apiKey, serverClient } from './serverClient';
 
@@ -67,7 +67,14 @@ app.post('/start-ai-agent', async (req, res) => {
     channel_type = 'messaging',
     platform = AgentPlatform.ANTHROPIC,
     schema,
-  } = req.body;
+    user_location,
+  } = req.body as {
+    channel_id: string;
+    channel_type?: string;
+    platform?: AgentPlatform;
+    schema?: Record<string, unknown>;
+    user_location?: UserLocation;
+  };
 
   // Simple validation
   if (!channel_id) {
@@ -108,6 +115,7 @@ app.post('/start-ai-agent', async (req, res) => {
         channel_type,
         channel_id_updated,
         schema,
+        user_location,
       );
 
       await agent.init();

@@ -14,7 +14,7 @@ import {
 	useChatContext,
 	useMessageComposer,
 } from "stream-chat-react";
-import { startAiAgent } from "../api";
+import { getUserLocation, startAiAgent } from "../api";
 import petSchema from "../../../schema/petSchema.json";
 
 const isWatchedByAI = (channel: Channel) => {
@@ -127,29 +127,11 @@ export const Composer = () => {
 				const model = "claude-haiku-4-5";
 
 				if (!isWatchedByAI(channel)) {
-					await startAiAgent(channel, model, platform, petSchema);
+					const location = await getUserLocation();
+					await startAiAgent(channel, model, platform, petSchema, location);
 				}
 
 					await sendMessage(composedData);
-
-					if (
-						typeof channel.data?.summary !== "string" ||
-						!channel.data.summary.length
-					) {
-						// Skip summarise for now
-						// const summary = await summarizeConversation(
-						// 	message as string
-						// ).catch(() => {
-						// 	console.warn("Failed to summarize conversation");
-						// 	return null;
-						// });
-						
-
-						// if (typeof summary === "string" && summary.length > 0) {
-						// 	await channel.update({ summary });
-						// }
-						
-					}
 				}}
 			>
 				<AIMessageComposer.AttachmentPreview>

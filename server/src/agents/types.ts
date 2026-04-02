@@ -13,3 +13,9 @@ export enum AgentPlatform {
   ANTHROPIC = 'anthropic',
   OPENAI = 'openai',
 }
+
+export interface UserLocation {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+}

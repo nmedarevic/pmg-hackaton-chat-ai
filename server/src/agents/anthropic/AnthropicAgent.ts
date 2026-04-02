@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { AnthropicResponseHandler } from './AnthropicResponseHandler';
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import type { Channel, Event, StreamChat } from 'stream-chat';
-import type { AIAgent } from '../types';
+import type { AIAgent, UserLocation } from '../types';
 import { buildMessageContent } from './buildMessageContent';
 import { detectEnumOptions } from './detectEnumOptions';
 import { transformCollectedData } from '../../transformCollectedData';
@@ -18,12 +18,13 @@ export class AnthropicAgent implements AIAgent {
   private anthropic?: Anthropic;
   private handlers: AnthropicResponseHandler[] = [];
   private lastInteractionTs = Date.now();
-  private lastImageUrl: string | null = null;
+  private imageUrls: string[] = [];
 
   constructor(
     readonly chatClient: StreamChat,
     readonly channel: Channel,
     private readonly schema?: Record<string, unknown>,
+    private readonly userLocation?: UserLocation,
   ) {}
 
   dispose = async () => {
@@ -110,15 +111,17 @@ You are a friendly data collection assistant. Your job is to conversationally co
     const hasImages = e.message.attachments?.some((a) => a.type === 'image' && a.image_url);
     if (!message && !hasImages) return;
 
-    const imageUrl = e.message.attachments?.find(
-      (a): a is typeof a & { image_url: string } => a.type === 'image' && typeof a.image_url === 'string',
-    )?.image_url ?? null;
-    if (imageUrl) this.lastImageUrl = imageUrl;
+    const newImageUrls = (e.message.attachments ?? [])
+      .filter((a): a is typeof a & { image_url: string } => a.type === 'image' && typeof a.image_url === 'string')
+      .map((a) => a.image_url);
+    if (newImageUrls.length > 0) {
+      this.imageUrls.push(...newImageUrls);
+    }
 
     this.lastInteractionTs = Date.now();
 
     const isThreadReply = e.message.parent_id !== undefined;
-    const historySize = this.schema ? 20 : 20;
+    const historySize = 20;
 
     // For non-thread messages, the current message is already the last entry
     // in channel.state.messages — exclude it so we can re-add it with vision content.
