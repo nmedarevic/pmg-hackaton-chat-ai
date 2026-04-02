@@ -29,7 +29,7 @@ export interface ListingPayload {
   requiredDeposit: number;
   hidePrice: boolean;
   preferredContact: string;
-  location: Record<string, unknown>;
+  location: LocationData;
   attributes: ListingAttribute[];
   videos: string[];
   images: string[];
@@ -96,7 +96,7 @@ export function transformCollectedData(input: CollectedData, location?: Location
     requiredDeposit: input.deposit_amount,
     hidePrice: false,
     preferredContact: 'ChatOnly',
-    location: (location ?? {
+    location: location ?? {
       coordinates: {
         latitude: 53.4327408,
         longitude: -2.313706,
@@ -107,7 +107,7 @@ export function transformCollectedData(input: CollectedData, location?: Location
       areaLevel2: 'Greater Manchester',
       areaLevel1: 'England',
       country: 'United Kingdom',
-    }) as unknown as Record<string, unknown>,
+    },
     attributes,
     videos: [],
     images: [],
