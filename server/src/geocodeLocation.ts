@@ -45,6 +45,11 @@ export async function geocodeLocation(
     return null;
   }
 
+  if (!data.results?.length) {
+    console.warn('[geocodeLocation] No results for coordinates:', latitude, longitude);
+    return null;
+  }
+
   const result = data.results[0];
   const components: Array<{ long_name: string; types: string[] }> = result.address_components ?? [];
 
