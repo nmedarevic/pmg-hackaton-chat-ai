@@ -27,23 +27,21 @@ export async function geocodeLocation(
     return null;
   }
 
+  console.log(`[geocodeLocation] fetching for ${latitude}, ${longitude}`);
+
   const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
 
   let data: any;
   try {
     const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`[geocodeLocation] HTTP error ${response.status}`);
+    data = await response.json();
+
+    if (data.status !== 'OK') {
+      console.error(`[geocodeLocation] API error status: ${data.status}`);
       return null;
     }
-    data = await response.json();
   } catch (err) {
     console.error('[geocodeLocation] Network error:', err);
-    return null;
-  }
-
-  if (data.status === 'ZERO_RESULTS' || !data.results?.length) {
-    console.warn('[geocodeLocation] No results for coordinates:', latitude, longitude);
     return null;
   }
 
