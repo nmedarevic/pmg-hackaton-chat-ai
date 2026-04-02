@@ -1,0 +1,30 @@
+{
+  "name": "pmg-hackaton-2026",
+  "version": "1.0.0",
+  "description": "![Integrating Stream Chat with AI](/assets/repo_cover.png)",
+  "homepage": "https://github.com/nmedarevic/pmg-hackaton-chat-ai#readme",
+  "bugs": {
+    "url": "https://github.com/nmedarevic/pmg-hackaton-chat-ai/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nmedarevic/pmg-hackaton-chat-ai.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build:frontend": "npm run build --prefix frontend",
+    "build:server": "npm ci --prefix server npm run build --prefix server",
+    "build": "npm ci --prefix frontend && npm run build:frontend",
+    "start:frontend": "npm run start --prefix frontend",
+    "start:server": "npm run start --prefix server",
+    "start": "npm run start:frontend & npm run start:server",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

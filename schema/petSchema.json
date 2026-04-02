@@ -92,6 +92,10 @@
     "type": "string",
     "description": "When were all pets born? User can add a date in any format, but the output should be always in ISO8601 date with UTC timezone"
   },
+  "ready_to_leave": {
+    "type": "string",
+    "description": "Prefill this date to be the date_of_birth date plus 60 days, but the output should be always in ISO8601 date with UTC timezone"
+  },
   "price": {
     "type": "number",
     "description": "The asking price for each pet in GBP (pounds sterling). Ask the user for the price per puppy."

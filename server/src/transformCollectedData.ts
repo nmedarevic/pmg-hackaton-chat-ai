@@ -8,6 +8,7 @@ interface CollectedData {
   number_of_males: number;
   number_of_females: number;
   date_of_birth: string;
+  ready_to_leave: string;
   price: number;
   deposit_amount: number;
 }
@@ -66,17 +67,18 @@ export function transformCollectedData(input: CollectedData): ListingPayload {
   const motherBreedAttr = toBreedAttributeValue(input.mother_breed);
   const fatherBreedAttr = toBreedAttributeValue(input.father_breed);
   const dobTimestamp = new Date(input.date_of_birth).toISOString();
+  const readyToLeave = new Date(input.ready_to_leave).toISOString();
 
   const attributes: ListingAttribute[] = [
     { key: 'breed', value: breedAttr },
     { key: 'fatherBreed', value: fatherBreedAttr },
     { key: 'motherBreed', value: motherBreedAttr },
-    { key: 'generation', value: 'f1' },
+    { key: 'generation', value: 'pets.dogs.generation.f1B' },
     { key: 'listingType', value: ADVERT_TYPE_TO_LISTING_TYPE[input.advert_type] || input.advert_type },
     { key: 'numberOfFemales', value: String(input.number_of_females) },
     { key: 'numberOfMales', value: String(input.number_of_males) },
     { key: 'dateOfBirth', value: dobTimestamp },
-    { key: 'readyToLeave', value: '' },
+    { key: 'readyToLeave', value: readyToLeave },
     { key: 'viewedWith', value: 'true' },
     { key: 'microchipped', value: 'true' },
     { key: 'neutered', value: 'false' },
@@ -92,12 +94,20 @@ export function transformCollectedData(input: CollectedData): ListingPayload {
     requiredDeposit: input.deposit_amount,
     hidePrice: false,
     preferredContact: 'ChatOnly',
-    location: {},
+    location: {
+      "coordinates": {
+        "latitude": 53.4327408,
+        "longitude": -2.313706
+      },
+      "raw": "{\"address_components\":[{\"long_name\":\"M33 7WR\",\"short_name\":\"M33 7WR\",\"types\":[\"postal_code\"]},{\"long_name\":\"Sale\",\"short_name\":\"Sale\",\"types\":[\"postal_town\"]},{\"long_name\":\"Greater Manchester\",\"short_name\":\"Greater Manchester\",\"types\":[\"administrative_area_level_2\",\"political\"]},{\"long_name\":\"England\",\"short_name\":\"England\",\"types\":[\"administrative_area_level_1\",\"political\"]},{\"long_name\":\"United Kingdom\",\"short_name\":\"GB\",\"types\":[\"country\",\"political\"]}],\"formatted_address\":\"Sale M33 7WR, UK\",\"geometry\":{\"location\":{\"lat\":53.4327408,\"lng\":-2.313706},\"viewport\":{\"south\":53.43101671238331,\"west\":-2.317349345330443,\"north\":53.43694091055722,\"east\":-2.309293545625865}},\"html_attributions\":[]}",
+      "postalCode": "M33 7WR",
+      "city": "Sale",
+      "areaLevel2": "Greater Manchester",
+      "areaLevel1": "England",
+      "country": "United Kingdom"
+    },
     attributes,
     videos: [],
-    // Images are populated by the agent from actual uploaded URLs.
-    // Fallback to empty array — the caller (AnthropicAgent) will override this
-    // with the collected image URLs before submitting.
     images: [],
   };
 }

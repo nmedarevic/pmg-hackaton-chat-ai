@@ -1,5 +1,6 @@
 import { AIMessageComposer } from "@stream-io/chat-react-ai";
 import { useEffect } from "react";
+import { ChipBar } from "./ChipBar";
 import {
 	Channel,
 	isImageFile,
@@ -25,10 +26,37 @@ const isWatchedByAI = (channel: Channel) => {
 export const Composer = () => {
 	const { client } = useChatContext();
 	const { updateMessage, sendMessage } = useChannelActionContext();
-	const { channel } = useChannelStateContext();
+	const { channel, messages } = useChannelStateContext();
 	const composer = useMessageComposer();
 
 	const { attachments } = useAttachmentsForPreview();
+
+	const lastMessage = messages?.at(-1);
+	const chipOptions =
+		lastMessage?.ai_generated && lastMessage?.options?.length
+			? lastMessage.options
+			: null;
+
+	const handleChipSelect = async (label: string) => {
+		composer.textComposer.setText(label);
+		const composedData = await composer.compose();
+		if (!composedData) return;
+		composer.clear();
+		updateMessage(composedData.localMessage);
+
+		if (!channel.initialized) {
+			await channel.watch();
+		}
+
+		const platform = "anthropic";
+		const model = "claude-haiku-4-5";
+
+		if (!isWatchedByAI(channel)) {
+			await startAiAgent(channel, model, platform, petSchema);
+		}
+
+		await sendMessage(composedData);
+	};
 
 	useEffect(() => {
 		if (!composer) return;
@@ -47,16 +75,18 @@ export const Composer = () => {
 	}, [client, composer]);
 
 	useEffect(() => {
-		const listener = channel.on((event) => {
-			if (event.type === 'data_collection_complete') {
-				console.log('Data collection complete:', event.collected_data);
-			}
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const listener = channel.on('data_collection_complete' as any, (event: any) => {
+			console.log('Data collection complete:', event.collected_data);
 		});
 		return () => listener.unsubscribe();
 	}, [channel]);
 
 	return (
 		<div className="tut__composer-container">
+			{chipOptions && (
+				<ChipBar options={chipOptions} onSelect={handleChipSelect} />
+			)}
 			<AIMessageComposer
 				onChange={(e) => {
 					const input = e.currentTarget.elements.namedItem(
